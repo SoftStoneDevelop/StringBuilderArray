@@ -25,17 +25,8 @@ namespace StringBuilderArray
             _size = usedSize;
         }
 
-        private StringBuilderArray(StringBuilderArray stringBuilderArray)
+        private StringBuilderArray()
         {
-            _buffer = stringBuilderArray._buffer;
-            _size = stringBuilderArray._size;
-            _previous = stringBuilderArray._previous;
-            if(_previous != null)
-            {
-                _previous._next = this;
-            }
-
-            _next = stringBuilderArray;
         }
 
         public int Length
@@ -76,24 +67,41 @@ namespace StringBuilderArray
         {
             if(_next != null)
             {
-                _previous = new StringBuilderArray(this);
-                _next._previous = null;
-
+                var tempBuffer = _buffer;
                 _buffer = _next._buffer;
-                _next._buffer = null;
+                _next._buffer = tempBuffer;
+
+                var tempSize = _size;
+                _next._size = tempSize;
+                _size = 0;
+
+                _previous = _next;
+                _next._previous = this;
 
                 var tempNext = _next;
-                _next = _next._next;
-                tempNext._next = null;
+                _next = tempNext._next;
+                tempNext._next = this;
             }
             else
             {
-                _previous = new StringBuilderArray(this);
+                //create new as prev and swith data to prev
+                var tempPrev = new StringBuilderArray();
+                tempPrev._buffer = _buffer;
                 int newBufferLength = Math.Max(10, Math.Min(_buffer.Length * 2, MaxChunkSize));
                 _buffer = new string[newBufferLength];
-            }
+                
+                tempPrev._size = _size;
+                _size = 0;
 
-            _size = 0;
+                tempPrev._previous = _previous;
+                _previous = tempPrev;
+
+                tempPrev._next = this;
+                if(tempPrev._previous != null)
+                {
+                    tempPrev._previous._next = tempPrev;
+                }
+            }
         }
 
         public StringBuilderArray AppendLine(string str)
@@ -126,6 +134,17 @@ namespace StringBuilderArray
 
         public StringBuilderArray Clear()
         {
+            if(_previous == null && _next == null)
+            {
+                _size = 0;
+#if NET6_0_OR_GREATER
+                Array.Clear(_buffer);
+#else
+                Array.Clear(_buffer, 0, _buffer.Length);
+#endif
+                return this;
+            }
+
             StringBuilderArray head = null;
             var current = this;
             do
@@ -153,12 +172,18 @@ namespace StringBuilderArray
             }
 
             //make this head
-            _previous = null;
-            _next = head._next;
+            //create new as prev and swith data to prev
+            var tempBuffer = _buffer;
             _buffer = head._buffer;
-            _size = 0;
-            head._next = null;
-            head._previous = null;
+            head._buffer = tempBuffer;
+
+            var tempPr = _previous;
+            _previous = null;
+            if(tempPr._previous != null)
+            {
+                tempPr._previous._next = tempPr;
+            }
+            head._previous = tempPr;
 
             return this;
         }
