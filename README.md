@@ -4,7 +4,7 @@
 
 <h3 align="center">
 
-  [![Nuget](https://img.shields.io/nuget/v/Gedaq.Npgsql?logo=StringBuilderArray)](https://www.nuget.org/packages/StringBuilderArray/)
+  [![Nuget](https://img.shields.io/nuget/v/StringBuilderArray?logo=StringBuilderArray)](https://www.nuget.org/packages/StringBuilderArray/)
   [![Downloads](https://img.shields.io/nuget/dt/StringBuilderArray.svg)](https://www.nuget.org/packages/StringBuilderArray/)
   [![Stars](https://img.shields.io/github/stars/SoftStoneDevelop/StringBuilderArray?color=brightgreen)](https://github.com/SoftStoneDevelop/StringBuilderArray/stargazers)
   [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
