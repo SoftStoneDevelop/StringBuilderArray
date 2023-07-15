@@ -1,17 +1,18 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace StringBuilderArray
 {
-    public class StringBuilderArray
+    public class StringBuilderArray : IEnumerable<string>
     {
         private StringBuilderArray _previous;
         private StringBuilderArray _next;
         private string[] _buffer;
         private int _size;
-        private int _length;
 
-        internal static int MaxChunkSize = 8000;
+        internal static readonly int MaxChunkSize = 8000;
 
         public StringBuilderArray(int bufferSize = 10)
         {
@@ -22,25 +23,19 @@ namespace StringBuilderArray
         {
             _buffer = buffer;
             _size = usedSize;
-            if (_size > 0)
-            {
-                for (int i = 0; i < usedSize; i++)
-                {
-                    _length += buffer[i].Length;
-                }
-            }
         }
 
         private StringBuilderArray(StringBuilderArray stringBuilderArray)
         {
             _buffer = stringBuilderArray._buffer;
             _size = stringBuilderArray._size;
-            _length = stringBuilderArray._length;
             _previous = stringBuilderArray._previous;
             if(_previous != null)
             {
                 _previous._next = this;
             }
+
+            _next = stringBuilderArray;
         }
 
         public int Length
@@ -52,7 +47,11 @@ namespace StringBuilderArray
                 var current = this;
                 do
                 {
-                    result += current._length;
+                    for (int i = 0; i < current._size; i++)
+                    {
+                        result += current._buffer[i].Length;
+                    }
+
                     current = current._previous;
                 } while (current != null);
 
@@ -69,7 +68,6 @@ namespace StringBuilderArray
             }
 
             _buffer[_size++] = str;
-            _length += str.Length;
             return this;
         }
 
@@ -96,7 +94,6 @@ namespace StringBuilderArray
             }
 
             _size = 0;
-            _length = 0;
         }
 
         public StringBuilderArray AppendLine(string str)
@@ -106,7 +103,7 @@ namespace StringBuilderArray
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public StringBuilderArray Append(string[] strings)
+        public StringBuilderArray Append(IList<string> strings)
         {
             foreach (var str in strings)
             {
@@ -116,7 +113,7 @@ namespace StringBuilderArray
             return this;
         }
 
-        public StringBuilderArray AppendLine(string[] strings)
+        public StringBuilderArray AppendLine(IList<string> strings)
         {
             foreach (var str in strings)
             {
@@ -134,7 +131,6 @@ namespace StringBuilderArray
             do
             {
                 head = current;
-                current._length = 0;
                 current._size = 0;
 #if NET6_0_OR_GREATER
                 Array.Clear(current._buffer);
@@ -147,7 +143,6 @@ namespace StringBuilderArray
             current = this._next;
             while (current != null)
             {
-                current._length = 0;
                 current._size = 0;
 #if NET6_0_OR_GREATER
                 Array.Clear(current._buffer);
@@ -162,7 +157,6 @@ namespace StringBuilderArray
             _next = head._next;
             _buffer = head._buffer;
             _size = 0;
-            _length = 0;
             head._next = null;
             head._previous = null;
 
@@ -208,5 +202,124 @@ namespace StringBuilderArray
 
             return newStr;
         }
+
+#if NET5_0_OR_GREATER
+        public void ToString(Span<char> resultBuffer)
+        {
+            var length = Length;
+            if (length < resultBuffer.Length)
+            {
+                throw new ArgumentException($"{nameof(resultBuffer)} length less than {nameof(Length)}");
+            }
+
+            int offset = length;
+            var destBytes = length * sizeof(char);
+            var current = this;
+            
+            unsafe
+            {
+                fixed(char* resultPtr = resultBuffer)
+                {
+                    do
+                    {
+                        var buffer = current._buffer.AsSpan();
+                        for (int i = current._size - 1; i >= 0; i--)
+                        {
+                            var source = buffer[i];
+                            offset -= source.Length;
+                            fixed (char* pSource = source)
+                            {
+                                Buffer.MemoryCopy(pSource, resultPtr + offset, destBytes, source.Length * sizeof(char));
+                            }
+                        }
+
+                        current = current._previous;
+                    } while (current != null);
+                }
+            }
+        }
+#endif
+
+        #region IEnumerable
+
+        public IEnumerator<string> GetEnumerator()
+        {
+            return new StringBuilderArrayEnumerator(this);
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return new StringBuilderArrayEnumerator(this);
+        }
+
+        public struct StringBuilderArrayEnumerator : IEnumerator<string>
+        {
+            private StringBuilderArray _currentChunk;
+            private int _currentIndex;
+            private string _current;
+
+            public StringBuilderArrayEnumerator(StringBuilderArray stringBuilderArray)
+            {
+                _currentIndex = 0;
+                _current = null;
+
+                var tempChunk = stringBuilderArray;
+                do
+                {
+                    _currentChunk = tempChunk;
+                    tempChunk = _currentChunk._previous;
+                } while (tempChunk != null);
+            }
+
+#if NET5_0_OR_GREATER
+            readonly public string Current => _current;
+
+            readonly object IEnumerator.Current => _current;
+#else
+            public string Current => _current;
+
+            object IEnumerator.Current => _current;
+#endif
+
+            public void Dispose()
+            {
+                _currentChunk = null;
+                _current = null;
+            }
+
+            public bool MoveNext()
+            {
+                if(_currentChunk._size == 0)
+                {
+                    return false;
+                }
+
+                if (_currentChunk._size == _currentIndex)
+                {
+                    _currentIndex = 0;
+                    _currentChunk = _currentChunk._next;
+                }
+
+                if (_currentChunk == null || _currentChunk._size == 0)
+                {
+                    return false;
+                }
+
+                if (_currentChunk._size == 0)
+                {
+                    return false;
+                }
+
+                _current = _currentChunk._buffer[_currentIndex++];
+                return true;
+            }
+
+            public void Reset()
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        #endregion
     }
 }

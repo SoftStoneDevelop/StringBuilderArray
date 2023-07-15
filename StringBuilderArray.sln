@@ -3,9 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.3.32825.248
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StringBuilderArray", "Src\StringBuilderArray\StringBuilderArray.csproj", "{299F841C-87D1-4B54-9C58-FAE775F0BC54}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StringBuilderArray", "Src\StringBuilderArray\StringBuilderArray.csproj", "{299F841C-87D1-4B54-9C58-FAE775F0BC54}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Benchmark", "Src\Benchmark\Benchmark.csproj", "{4FD0FE00-B6ED-4E88-9CDB-4018108C59D3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmark", "Src\Benchmark\Benchmark.csproj", "{4FD0FE00-B6ED-4E88-9CDB-4018108C59D3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StringBuilderArrayTests", "Src\StringBuilderArray.Tests\StringBuilderArrayTests.csproj", "{BD0E31CE-062A-486B-B8E9-E8CFAAFD01E4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{4FD0FE00-B6ED-4E88-9CDB-4018108C59D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4FD0FE00-B6ED-4E88-9CDB-4018108C59D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4FD0FE00-B6ED-4E88-9CDB-4018108C59D3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BD0E31CE-062A-486B-B8E9-E8CFAAFD01E4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BD0E31CE-062A-486B-B8E9-E8CFAAFD01E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BD0E31CE-062A-486B-B8E9-E8CFAAFD01E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BD0E31CE-062A-486B-B8E9-E8CFAAFD01E4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
