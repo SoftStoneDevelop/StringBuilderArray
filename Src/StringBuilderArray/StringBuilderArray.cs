@@ -67,6 +67,15 @@ namespace StringBuilderArray
         {
             if(_next != null)
             {
+                /*
+                 * before
+                 * (prev)->(this)->(next)->...
+                 * 
+                 * after
+                 * (prev)->(next)->(this)->...
+                 * 
+                 */
+
                 var tempBuffer = _buffer;
                 _buffer = _next._buffer;
                 _next._buffer = tempBuffer;
@@ -84,7 +93,14 @@ namespace StringBuilderArray
             }
             else
             {
-                //create new as prev and swith data to prev
+                /* Move data(and prev/next links) between this and newChunk
+                 * before
+                 * (prev)->(this) (newChunk)
+                 * 
+                 * after
+                 * (prev)->(newChunk)->(this)
+                 * 
+                 */
                 var tempPrev = new StringBuilderArray();
                 tempPrev._buffer = _buffer;
                 int newBufferLength = Math.Max(10, Math.Min(_buffer.Length * 2, MaxChunkSize));
@@ -171,8 +187,14 @@ namespace StringBuilderArray
                 current = current._next;
             }
 
-            //make this head
-            //create new as prev and swith data to prev
+            /* Move data(and prev/next links) between head and tail
+                 * before
+                 * (head)->...->(prev)->(this)
+                 * 
+                 * after
+                 * (this)->...->(prev)->(head)
+                 * 
+                 */
             var tempBuffer = _buffer;
             _buffer = head._buffer;
             head._buffer = tempBuffer;
