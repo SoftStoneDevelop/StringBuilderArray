@@ -68,11 +68,12 @@ namespace StringBuilderArray
             if(_next != null)
             {
                 /*
+                 * Move data(and prev/next links) between this and emptyNext(empty because outlived Clear)
                  * before
-                 * (prev)->(this)->(next)->...
+                 * (prev)->(this)->(emptyNext)->...
                  * 
                  * after
-                 * (prev)->(next)->(this)->...
+                 * (prev)->(next)->(emptyNext)->...
                  * 
                  */
 
