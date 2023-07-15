@@ -6,6 +6,7 @@ namespace StringBuilderArray
     public class StringBuilderArray
     {
         private StringBuilderArray _previous;
+        private StringBuilderArray _next;
         private string[] _buffer;
         private int _size;
         private int _length;
@@ -36,6 +37,10 @@ namespace StringBuilderArray
             _size = stringBuilderArray._size;
             _length = stringBuilderArray._length;
             _previous = stringBuilderArray._previous;
+            if(_previous != null)
+            {
+                _previous._next = this;
+            }
         }
 
         public int Length
@@ -60,12 +65,38 @@ namespace StringBuilderArray
         {
             if (_size == _buffer.Length)
             {
-                Grow();
+                MakeThisPrevious();
             }
-            
+
             _buffer[_size++] = str;
             _length += str.Length;
             return this;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void MakeThisPrevious()
+        {
+            if(_next != null)
+            {
+                _previous = new StringBuilderArray(this);
+                _next._previous = null;
+
+                _buffer = _next._buffer;
+                _next._buffer = null;
+
+                var tempNext = _next;
+                _next = _next._next;
+                tempNext._next = null;
+            }
+            else
+            {
+                _previous = new StringBuilderArray(this);
+                int newBufferLength = Math.Max(10, Math.Min(_buffer.Length * 2, MaxChunkSize));
+                _buffer = new string[newBufferLength];
+            }
+
+            _size = 0;
+            _length = 0;
         }
 
         public StringBuilderArray AppendLine(string str)
@@ -96,15 +127,46 @@ namespace StringBuilderArray
             return this;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Grow()
+        public StringBuilderArray Clear()
         {
-            _previous = new StringBuilderArray(this);
+            StringBuilderArray head = null;
+            var current = this;
+            do
+            {
+                head = current;
+                current._length = 0;
+                current._size = 0;
+#if NET6_0_OR_GREATER
+                Array.Clear(current._buffer);
+#else
+                Array.Clear(current._buffer, 0, current._buffer.Length);
+#endif
+                current = current._previous;
+            } while (current != null);
 
-            int newBufferLength = Math.Max(10, Math.Min(_buffer.Length * 2, MaxChunkSize));
-            _buffer = new string[newBufferLength];
+            current = this._next;
+            while (current != null)
+            {
+                current._length = 0;
+                current._size = 0;
+#if NET6_0_OR_GREATER
+                Array.Clear(current._buffer);
+#else
+                Array.Clear(current._buffer, 0, current._buffer.Length);
+#endif
+                current = current._next;
+            }
+
+            //make this head
+            _previous = null;
+            _next = head._next;
+            _buffer = head._buffer;
             _size = 0;
             _length = 0;
+            head._next = null;
+            head._previous = null;
+
+            return this;
         }
 
         public override string ToString()

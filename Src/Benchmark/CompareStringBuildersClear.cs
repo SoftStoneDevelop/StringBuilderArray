@@ -6,7 +6,7 @@ namespace Benchmark
     [MemoryDiagnoser]
     [SimpleJob(RuntimeMoniker.Net70)]
     [HideColumns("Error", "StdDev", "Median", "RatioSD")]
-    public partial class CompareStringBuilders
+    public partial class CompareStringBuildersClear
     {
         [Params(5, 7, 10, 50, 100, 1000, 2500, 5_000, 10_000, 100_000, 500_000, 1_071_741)]
         public int StrLength;
@@ -28,6 +28,12 @@ namespace Benchmark
                 sb.AppendLine(_str);
             }
 
+            sb.Clear();
+            for (int i = 0; i < 1000; i++)
+            {
+                sb.AppendLine(_str);
+            }
+
             var result = sb.ToString();
         }
 
@@ -35,6 +41,12 @@ namespace Benchmark
         public void StringBuilderArray()
         {
             var sb = new StringBuilderArray.StringBuilderArray();
+            for (int i = 0; i < 1000; i++)
+            {
+                sb.AppendLine(_str);
+            }
+
+            sb.Clear();
             for (int i = 0; i < 1000; i++)
             {
                 sb.AppendLine(_str);

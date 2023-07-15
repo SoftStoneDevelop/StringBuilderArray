@@ -7,6 +7,7 @@ namespace Benchmark
         static void Main(string[] args)
         {
             BenchmarkRunner.Run<CompareStringBuilders>();
+            BenchmarkRunner.Run<CompareStringBuildersClear>();
         }
     }
 }
