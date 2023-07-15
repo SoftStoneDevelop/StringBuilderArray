@@ -1,6 +1,23 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFrameworks>net7.0</TargetFrameworks>
+		<TargetFrameworks>net5.0;netstandard2.0</TargetFrameworks>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
+	<PropertyGroup>
+		<PackageId>StringBuilderArray</PackageId>
+		<PackageVersion>1.0.0.0</PackageVersion>
+		<Authors>Brevnov Vyacheslav Sergeevich</Authors>
+		<RepositoryUrl>https://github.com/SoftStoneDevelop/StringBuilderArray</RepositoryUrl>
+		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+		<Description>The version of StringBuilder built on an array of strings string[]: uses less memory.</Description>
+		<PackageTags>stringbuilder, string</PackageTags>
+		<NoPackageAnalysis>true</NoPackageAnalysis>
+		<PackageLicenseFile>LICENSE</PackageLicenseFile>
+	</PropertyGroup>
+	<ItemGroup>
+		<None Include="..\..\LICENSE">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
 </Project>

@@ -5,6 +5,7 @@ namespace Benchmark
 {
     [MemoryDiagnoser]
     [SimpleJob(RuntimeMoniker.Net70)]
+    [SimpleJob(RuntimeMoniker.Net481)]
     [HideColumns("Error", "StdDev", "Median", "RatioSD")]
     public partial class CompareStringBuilders
     {

@@ -120,8 +120,11 @@ namespace StringBuilderArray
                 {
                     do
                     {
-
+#if NET5_0_OR_GREATER
                         var buffer = current._buffer.AsSpan();
+#else
+                        var buffer = current._buffer;
+#endif
                         for (int i = current._size - 1; i >= 0; i--)
                         {
                             var source = buffer[i];
