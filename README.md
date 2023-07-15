@@ -17,12 +17,6 @@ The version of StringBuilder built on an array of strings string[]: uses less me
 
 ```C#
 
-        [IterationSetup]
-        public void Setup()
-        {
-            _str = new string('S', StrLength);
-        }
-
         [Benchmark(Baseline = true, Description = "StringBuilder")]
         public void StringBuilder()
         {
@@ -88,6 +82,45 @@ The version of StringBuilder built on an array of strings string[]: uses less me
 | StringBuilderArray |   1071741 | 152,856.84 μs |  0.53 |         - |         - |         - | 2093269.14 KB |        0.50 |
 
 ## Reuse instance benchmark
+```C#
+
+        [Benchmark(Baseline = true, Description = "StringBuilder")]
+        public void StringBuilder()
+        {
+            var sb = new System.Text.StringBuilder();
+            for (int i = 0; i < 1000; i++)
+            {
+                sb.AppendLine(_str);
+            }
+
+            sb.Clear();
+            for (int i = 0; i < 1000; i++)
+            {
+                sb.AppendLine(_str);
+            }
+
+            var result = sb.ToString();
+        }
+
+        [Benchmark(Description = "StringBuilderArray")]
+        public void StringBuilderArray()
+        {
+            var sb = new StringBuilderArray.StringBuilderArray();
+            for (int i = 0; i < 1000; i++)
+            {
+                sb.AppendLine(_str);
+            }
+
+            sb.Clear();
+            for (int i = 0; i < 1000; i++)
+            {
+                sb.AppendLine(_str);
+            }
+
+            var result = sb.ToString();
+        }
+
+```
 
 |             Method | StrLength |          Mean | Ratio |      Gen0 |      Gen1 |      Gen2 |     Allocated | Alloc Ratio |
 |------------------- |---------- |--------------:|------:|----------:|----------:|----------:|--------------:|------------:|
