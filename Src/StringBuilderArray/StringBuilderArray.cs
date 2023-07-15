@@ -171,7 +171,11 @@ namespace StringBuilderArray
 
         public override string ToString()
         {
+#if NET6_0_OR_GREATER
+            var newStr = string.Create<object>(Length, null, (_, _) => {});
+#else
             var newStr = StringHelper.FastAllocateString(Length);
+#endif
             int offset = newStr.Length;
             var destBytes = newStr.Length * sizeof(char);
             var current = this;
