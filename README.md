@@ -159,5 +159,3 @@ The version of StringBuilder built on an array of strings string[]: uses less me
 |                    |           |               |       |               |             |
 |      **StringBuilder** |   **1071741** | **370,070.86 μs** |  **1.00** | **6280013.72 KB** |        **1.00** |
 | StringBuilderArray |   1071741 | 153,051.83 μs |  0.41 | 2093289.48 KB |        0.33 |
-|      **System.Text.StringBuilder** |   **1071741** | **370,876.76 μs** |  **1.00** | **7000.0000** | **6000.0000** | **4000.0000** | **6280013.72 KB** |        **1.00** |
-| StringBuilderArray |   1071741 | 152,671.59 μs |  0.41 |         - |         - |         - | 2093279.49 KB |        0.33 |
