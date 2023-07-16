@@ -287,6 +287,136 @@ namespace StringBuilderArray
             }
         }
 #endif
+        /// <summary>
+        /// Search string in builder(not full-text search, compares only parts of which were filled)
+        /// </summary>
+        /// <returns>return index fron the end; -1 if not found</returns>
+        public int GetIndex(string searchStr)
+        {
+            var index = 0;
+            var current = this;
+            do
+            {
+#if NET5_0_OR_GREATER
+                var buffer = current._buffer.AsSpan();
+#else
+                var buffer = current._buffer;
+#endif
+                for (int i = current._size - 1; i >= 0; i--)
+                {
+                    if(buffer[i] == searchStr)
+                    {
+                        return index;
+                    }
+                    
+                    index++;
+                }
+
+                current = current._previous;
+            } while (current != null);
+
+            return -1;
+        }
+
+        public bool Insert(int indexFromTheEnd, string value)
+        {
+            var index = 0;
+            var current = this;
+            do
+            {
+                if (indexFromTheEnd <= index + current._size - 1)
+                {
+                    break;
+                }
+
+                index += current._size;
+                current = current._previous;
+            } while (current != null);
+
+            if (current != null)
+            {
+                var buffer = current._buffer;
+                int shiftIndex = current._size - (indexFromTheEnd - index) - 1;
+                Shift(current, shiftIndex);
+
+                buffer[shiftIndex] = value;
+                return true;
+            }
+
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void Shift(StringBuilderArray current, int index)
+        {
+            string movedValue = null;
+#if NET5_0_OR_GREATER
+            Span<string> buffer;
+#else
+            string[] buffer;
+#endif
+
+            do
+            {
+                if(current == null)
+                {
+                    MakeThisPrevious();
+                    Append(movedValue);
+                    movedValue = null;
+                    break;
+                }
+
+#if NET5_0_OR_GREATER
+                buffer = current._buffer.AsSpan();
+#else
+                buffer = current._buffer;
+#endif
+
+                if (buffer.Length == current._size)
+                {
+                    movedValue = buffer[buffer.Length - 1];
+#if NET5_0_OR_GREATER
+                    ShiftRight(buffer);
+#else
+                    ShiftRight();
+#endif
+                    index = 0;
+                }
+                else
+                {
+#if NET5_0_OR_GREATER
+                    ShiftRight(buffer);
+#else
+                    ShiftRight();
+#endif
+                    buffer[index] = movedValue;
+                    current._size++;
+                    movedValue = null;
+                    break;
+                }
+
+                current = current._next;
+            } while (true);
+
+#if NET5_0_OR_GREATER
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            void ShiftRight(Span<string> span)
+            {
+                for (var i = span.Length - 1; i > index; i--)
+                {
+                    span[i] = span[i - 1];
+                }
+            }
+#else
+            void ShiftRight()
+            {
+                for (var i = buffer.Length - 1; i > index; i--)
+                {
+                    buffer[i] = buffer[i - 1];
+                }
+            }
+#endif
+        }
 
         #region IEnumerable
 
