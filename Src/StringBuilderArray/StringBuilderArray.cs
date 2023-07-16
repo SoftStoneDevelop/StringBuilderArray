@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
+using System.Reflection;
 #endif
 using System.Runtime.CompilerServices;
 
@@ -311,11 +312,18 @@ namespace StringBuilderArray
 #endif
                 for (int i = current._size - 1; i >= 0; i--)
                 {
-                    if(buffer[i] == searchStr)
+#if NET6_0_OR_GREATER
+                    if (IsTheSameSequence(current, i, searchStr))
                     {
                         return index;
                     }
-                    
+#else
+                    if (buffer[i] == searchStr)
+                    {
+                        return index;
+                    }
+#endif
+
                     index++;
                 }
 
@@ -324,6 +332,44 @@ namespace StringBuilderArray
 
             return -1;
         }
+
+#if NET6_0_OR_GREATER
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool IsTheSameSequence(StringBuilderArray current, int bufferIndex, ReadOnlySpan<char> searchStr)
+        {
+            var indexInsearchStr = searchStr.Length - 1;
+            do
+            {
+                var buffer = current._buffer.AsSpan();
+                if (bufferIndex == -1)
+                {
+                    bufferIndex = current._size - 1;
+                }
+
+                for (; bufferIndex >= 0; bufferIndex--)
+                {
+                    var valSpan = buffer[bufferIndex].AsSpan();
+                    for (int i = valSpan.Length - 1; i >= 0; i--)
+                    {
+                        if (valSpan[i] != searchStr[indexInsearchStr--])
+                        {
+                            return false;
+                        }
+
+                        if (indexInsearchStr == -1 && i == 0)
+                        {
+                            return true;
+                        }
+                    }
+                }
+
+                bufferIndex = -1;
+                current = current._next;
+            } while (current != null);
+
+            return false;
+        }
+#endif
 
         public bool Insert(int indexFromTheEnd, string value)
         {
@@ -517,12 +563,16 @@ namespace StringBuilderArray
 
         public StringBuilderArray AppendLine(IFormatProvider provider, [InterpolatedStringHandlerArgument("", "provider")] ref StringBuilderArrayStringHandler handler) => AppendLine();
 
+        public StringBuilderArray Insert(int indexFromTheEnd, [InterpolatedStringHandlerArgument("", "indexFromTheEnd")] ref StringBuilderArrayInsertStringHandler handler) => this;
+
+        public StringBuilderArray Insert(IFormatProvider provider, int indexFromTheEnd, [InterpolatedStringHandlerArgument("", "provider", "indexFromTheEnd")] ref StringBuilderArrayInsertStringHandler handler) => this;
+
+        internal static readonly string _whitespace = " ";
+
         [EditorBrowsable(EditorBrowsableState.Never)]
         [InterpolatedStringHandler]
         public struct StringBuilderArrayStringHandler
         {
-            private static readonly string _whitespace = " ";
-
             private readonly StringBuilderArray _stringBuilder;
             private readonly IFormatProvider _provider;
             private readonly bool _hasCustomFormatter;
@@ -644,6 +694,148 @@ namespace StringBuilderArray
                 if (formatter is not null)
                 {
                     _stringBuilder.Append(formatter.Format(format, value, _provider));
+                }
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            internal static bool HasCustomFormatter(IFormatProvider provider)
+            {
+                Debug.Assert(provider is not null);
+                Debug.Assert(provider is not CultureInfo || provider.GetFormat(typeof(ICustomFormatter)) is null, "Expected CultureInfo to not provide a custom formatter");
+                return
+                    provider.GetType() != typeof(CultureInfo) &&
+                    provider.GetFormat(typeof(ICustomFormatter)) != null;
+            }
+        }
+
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        [InterpolatedStringHandler]
+        public struct StringBuilderArrayInsertStringHandler
+        {
+            private readonly StringBuilderArray _stringBuilder;
+            private readonly IFormatProvider _provider;
+            private readonly bool _hasCustomFormatter;
+            private int _indexFromTheEnd;
+
+            public StringBuilderArrayInsertStringHandler(int literalLength, int formattedCount, StringBuilderArray stringBuilder, int indexFromTheEnd)
+            {
+                _stringBuilder = stringBuilder;
+                _provider = null;
+                _hasCustomFormatter = false;
+                _indexFromTheEnd = indexFromTheEnd;
+            }
+
+            public StringBuilderArrayInsertStringHandler(int literalLength, int formattedCount, StringBuilderArray stringBuilder, IFormatProvider provider, int indexFromTheEnd)
+            {
+                _stringBuilder = stringBuilder;
+                _provider = provider;
+                _hasCustomFormatter = provider is not null && HasCustomFormatter(provider);
+                _indexFromTheEnd = indexFromTheEnd;
+            }
+
+            public void AppendLiteral(string value) => _stringBuilder.Insert(_indexFromTheEnd, value);
+
+            #region AppendFormatted
+
+            #region AppendFormatted T
+            public void AppendFormatted<T>(T value)
+            {
+                if (_hasCustomFormatter)
+                {
+                    AppendCustomFormatter(value, format: null);
+                }
+                else if (value is IFormattable)
+                {
+                    _stringBuilder.Insert(_indexFromTheEnd, ((IFormattable)value).ToString(format: null, _provider));
+                }
+                else if (value is not null)
+                {
+                    _stringBuilder.Insert(_indexFromTheEnd, value.ToString());
+                }
+            }
+
+            public void AppendFormatted<T>(T value, string format)
+            {
+                if (_hasCustomFormatter)
+                {
+                    AppendCustomFormatter(value, format);
+                }
+                else if (value is IFormattable)
+                {
+                    _stringBuilder.Insert(_indexFromTheEnd, ((IFormattable)value).ToString(format, _provider));
+                }
+                else if (value is not null)
+                {
+                    _stringBuilder.Insert(_indexFromTheEnd, value.ToString());
+                }
+            }
+
+            public void AppendFormatted<T>(T value, int alignment) => AppendFormatted(value, alignment, format: null);
+
+            public void AppendFormatted<T>(T value, int alignment, string format)
+            {
+                if (alignment == 0)
+                {
+                    AppendFormatted(value, format);
+                }
+                else if (alignment < 0)
+                {
+                    int start = _stringBuilder.Length;
+                    AppendFormatted(value, format);
+                    int paddingRequired = -alignment - (_stringBuilder.Length - start);
+                    if (paddingRequired > 0)
+                    {
+                        for (int i = 0; i < paddingRequired; i++)
+                        {
+                            _stringBuilder.Insert(_indexFromTheEnd, _whitespace);
+                        }
+                    }
+                }
+                else
+                {
+                    for (int i = 0; i < alignment; i++)
+                    {
+                        _stringBuilder.Insert(_indexFromTheEnd, _whitespace);
+                    }
+                    AppendFormatted(value, format);
+                }
+            }
+            #endregion
+
+            #region AppendFormatted string
+            public void AppendFormatted(string value)
+            {
+                if (!_hasCustomFormatter)
+                {
+                    _stringBuilder.Insert(_indexFromTheEnd, value);
+                }
+                else
+                {
+                    AppendFormatted<string>(value);
+                }
+            }
+
+            public void AppendFormatted(string value, int alignment = 0, string format = null) => AppendFormatted<string>(value, alignment, format);
+            #endregion
+
+            #region AppendFormatted object
+            public void AppendFormatted(object value, int alignment = 0, string format = null) => AppendFormatted<object>(value, alignment, format);
+            #endregion
+
+            #endregion
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            private void AppendCustomFormatter<T>(T value, string format)
+            {
+                Debug.Assert(_hasCustomFormatter);
+                Debug.Assert(_provider != null);
+
+                ICustomFormatter formatter = (ICustomFormatter)_provider.GetFormat(typeof(ICustomFormatter));
+                Debug.Assert(formatter != null, "An incorrectly written provider said it implemented ICustomFormatter, and then didn't");
+
+                if (formatter is not null)
+                {
+                    _stringBuilder.Insert(_indexFromTheEnd, formatter.Format(format, value, _provider));
                 }
             }
 

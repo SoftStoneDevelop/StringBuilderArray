@@ -1,5 +1,4 @@
 ﻿using NUnit.Framework;
-using System.Collections.Generic;
 
 namespace StringBuilderArrayTests
 {
@@ -25,59 +24,25 @@ namespace StringBuilderArrayTests
             Assert.That(sbArr.GetIndex("10"), Is.EqualTo(-1));
         }
 
+#if NET6_0_OR_GREATER
         [Test]
-        public void Insert()
+        public void GetIndexInterpool()
         {
-            var expect = new List<string>()
-            {
-                "0", "1","2","3","4","5","6","7","8","9"
-            };//count 10
-
             var sbArr = new StringBuilderArray.StringBuilderArray();
             for (int i = 0; i < 10; i++)
             {
-                sbArr.Append(i.ToString());
+                sbArr.Append($"Number {i}");
+                Assert.That(sbArr.GetIndex($"Number {i}"), Is.EqualTo(0));
             }
-
-            expect.Insert(expect.Count - 1, "Secret before end");
-            //count 11
-            sbArr.Insert(0, "Secret before end");
 
             var index = 0;
-            foreach (var str in sbArr)
+            for (int i = 10 - 1; i >= 0; i--)
             {
-                Assert.That(str, Is.EqualTo(expect[index++]));
+                Assert.That(sbArr.GetIndex($"Number {i}"), Is.EqualTo((index++) * 2));
             }
 
-            expect.Insert(0, "Secret start");
-            //count 12
-            sbArr.Insert(10, "Secret start");
-
-            index = 0;
-            foreach (var str in sbArr)
-            {
-                Assert.That(str, Is.EqualTo(expect[index++]));
-            }
-
-            expect.Insert(1, "Secret index 1");
-            //count 13
-            sbArr.Insert(10, "Secret index 1");
-
-            index = 0;
-            foreach (var str in sbArr)
-            {
-                Assert.That(str, Is.EqualTo(expect[index++]));
-            }
-
-            expect.Insert(9, "Secret index 9");
-            //count 14
-            sbArr.Insert(3, "Secret index 9");
-
-            index = 0;
-            foreach (var str in sbArr)
-            {
-                Assert.That(str, Is.EqualTo(expect[index++]));
-            }
+            Assert.That(sbArr.GetIndex("20"), Is.EqualTo(-1));
         }
+#endif
     }
 }
