@@ -19,12 +19,18 @@ namespace StringBuilderArrayTests
             for (int i = 0; i < 53; i++)
             {
                 sb.AppendLine(i.ToString() + strBuilded);
+#if NET6_0_OR_GREATER
+                sb.Append($"Interpool {i}");
+#endif
             }
 
             var sbArr = new StringBuilderArray.StringBuilderArray();
             for (int i = 0; i < 53; i++)
             {
                 sbArr.AppendLine(i.ToString() + strBuilded);
+#if NET6_0_OR_GREATER
+                sbArr.Append($"Interpool {i}");
+#endif
             }
 
 #if NET5_0_OR_GREATER
@@ -50,17 +56,26 @@ namespace StringBuilderArrayTests
             for (int i = 53; i < 70; i++)
             {
                 sb.AppendLine(i.ToString() + strBuilded);
+#if NET6_0_OR_GREATER
+                sb.Append($"Interpool {i}");
+#endif
             }
 
             var sbArr = new StringBuilderArray.StringBuilderArray();
             for (int i = 0; i < 53; i++)
             {
                 sbArr.AppendLine(i.ToString() + strBuilded);
+#if NET6_0_OR_GREATER
+                sbArr.Append($"Interpool {i}");
+#endif
             }
             sbArr.Clear();
             for (int i = 53; i < 70; i++)
             {
                 sbArr.AppendLine(i.ToString() + strBuilded);
+#if NET6_0_OR_GREATER
+                sbArr.Append($"Interpool {i}");
+#endif
             }
 
 #if NET5_0_OR_GREATER
@@ -88,12 +103,20 @@ namespace StringBuilderArrayTests
                 var text = i.ToString() + strBuilded;
                 list.Add(text);
                 list.Add(Environment.NewLine);
+#if NET6_0_OR_GREATER
+                list.Add("Interpool ");
+                list.Add(i.ToString());
+                list.Add(Environment.NewLine);
+#endif
             }
 
             var sbArr = new StringBuilderArray.StringBuilderArray();
             for (int i = 0; i < 53; i++)
             {
                 sbArr.AppendLine(i.ToString() + strBuilded);
+#if NET6_0_OR_GREATER
+                sbArr.AppendLine($"Interpool {i}");
+#endif
             }
 
             var index = 0;

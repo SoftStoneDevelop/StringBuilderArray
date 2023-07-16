@@ -19,12 +19,18 @@ namespace StringBuilderArrayTests
             for (int i = 0; i < 53; i++)
             {
                 sb.Append(i.ToString() + strBuilded);
+#if NET6_0_OR_GREATER
+                sb.Append($"Interpool {i}");
+#endif
             }
 
             var sbArr = new StringBuilderArray.StringBuilderArray();
             for (int i = 0; i < 53; i++)
             {
                 sbArr.Append(i.ToString() + strBuilded);
+#if NET6_0_OR_GREATER
+                sbArr.Append($"Interpool {i}");
+#endif
             }
 
 #if NET5_0_OR_GREATER
@@ -50,17 +56,26 @@ namespace StringBuilderArrayTests
             for (int i = 53; i < 70; i++)
             {
                 sb.Append(i.ToString() + strBuilded);
+#if NET6_0_OR_GREATER
+                sb.Append($"Interpool {i}");
+#endif
             }
 
             var sbArr = new StringBuilderArray.StringBuilderArray();
             for (int i = 0; i < 53; i++)
             {
                 sbArr.Append(i.ToString() + strBuilded);
+#if NET6_0_OR_GREATER
+                sbArr.Append($"Interpool {i}");
+#endif
             }
             sbArr.Clear();
             for (int i = 53; i < 70; i++)
             {
                 sbArr.Append(i.ToString() + strBuilded);
+#if NET6_0_OR_GREATER
+                sbArr.Append($"Interpool {i}");
+#endif
             }
 
 #if NET5_0_OR_GREATER
@@ -87,12 +102,19 @@ namespace StringBuilderArrayTests
             {
                 var text = i.ToString() + strBuilded;
                 list.Add(text);
+#if NET6_0_OR_GREATER
+                list.Add("Interpool ");
+                list.Add(i.ToString());
+#endif
             }
 
             var sbArr = new StringBuilderArray.StringBuilderArray();
             for (int i = 0; i < 53; i++)
             {
                 sbArr.Append(i.ToString() + strBuilded);
+#if NET6_0_OR_GREATER
+                sbArr.Append($"Interpool {i}");
+#endif
             }
 
             var index = 0;
