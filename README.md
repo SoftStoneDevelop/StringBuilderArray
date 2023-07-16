@@ -159,3 +159,42 @@ The version of StringBuilder built on an array of strings string[]: uses less me
 |                    |           |               |       |               |             |
 |      **StringBuilder** |   **1071741** | **370,070.86 μs** |  **1.00** | **6280013.72 KB** |        **1.00** |
 | StringBuilderArray |   1071741 | 153,051.83 μs |  0.41 | 2093289.48 KB |        0.33 |
+
+Insert benchmark
+
+```C#
+
+        [Benchmark(Baseline = true, Description = "StringBuilder")]
+        public void StringBuilder()
+        {
+            var sb = new System.Text.StringBuilder();
+            for (int i = 0; i < 100; i++)
+            {
+                sb.Append(_str);
+            }
+
+            //before 1 str from end
+            sb.Insert(99 * _str.Length, _str);
+            //in start
+            sb.Insert(0, _str);
+            //after 5 str from start
+            sb.Insert(5 * _str.Length, _str);
+        }
+
+        [Benchmark(Description = "StringBuilderArray")]
+        public void StringBuilderArray()
+        {
+            var sb = new StringBuilderArray.StringBuilderArray();
+            for (int i = 0; i < 100; i++)
+            {
+                sb.Append(_str);
+            }
+
+            sb.Insert(0, _str);
+            //in start
+            sb.Insert(100, _str);
+            //after 5 str from start
+            sb.Insert(96, _str);
+        }
+
+```
