@@ -11,7 +11,7 @@
 
 </h3>
 
-The version of StringBuilder built on an array of strings string[]: uses less memory.
+Collect the resulting string without allocating memory.
 
 ## Benchmark:
 
