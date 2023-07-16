@@ -27,8 +27,6 @@ namespace Benchmark
             {
                 sb.AppendLine(_str);
             }
-
-            var result = sb.ToString();
         }
 
         [Benchmark(Description = "StringBuilderArray")]
@@ -39,8 +37,6 @@ namespace Benchmark
             {
                 sb.AppendLine(_str);
             }
-
-            var result = sb.ToString();
         }
     }
 }
