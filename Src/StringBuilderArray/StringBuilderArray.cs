@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
-using System.Reflection;
 #endif
 using System.Runtime.CompilerServices;
 
@@ -18,7 +17,7 @@ namespace StringBuilderArray
         private string[] _buffer;
         private int _size;
 
-        internal static readonly int MaxChunkSize = 8000;
+        internal const int MaxChunkSize = 8000;
 
         public StringBuilderArray(int bufferSize = 10)
         {
@@ -106,12 +105,9 @@ namespace StringBuilderArray
                  * (prev)->(newChunk)->(this)
                  * 
                  */
-                var tempPrev = new StringBuilderArray();
-                tempPrev._buffer = _buffer;
+                var tempPrev = new StringBuilderArray(_buffer, _size);
                 int newBufferLength = Math.Max(10, Math.Min(_buffer.Length * 2, MaxChunkSize));
                 _buffer = new string[newBufferLength];
-                
-                tempPrev._size = _size;
                 _size = 0;
 
                 tempPrev._previous = _previous;

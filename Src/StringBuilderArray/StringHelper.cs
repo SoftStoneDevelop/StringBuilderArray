@@ -1,10 +1,10 @@
-﻿using System;
+﻿#if NET6_0_OR_GREATER
+#else
+using System;
 using System.Reflection;
 
 namespace StringBuilderArray
 {
-#if NET6_0_OR_GREATER
-#else
     public static class StringHelper
     {
         public static readonly Func<int, string> FastAllocateString =
@@ -13,5 +13,5 @@ namespace StringBuilderArray
             .CreateDelegate(typeof(Func<int, string>))
             ;
     }
-#endif
 }
+#endif
