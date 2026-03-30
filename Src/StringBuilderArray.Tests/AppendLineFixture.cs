@@ -8,7 +8,7 @@ namespace StringBuilderArrayTests
     [TestFixture]
     public class AppendLineFixture
     {
-        public static object[] LengthCases = { 5, 7, 10, 50, 100, 1000, 2500 };
+        public static readonly object[] LengthCases = { 5, 7, 10, 50, 100, 1000, 2500 };
 
         [Test]
         [TestCaseSource(nameof(LengthCases))]

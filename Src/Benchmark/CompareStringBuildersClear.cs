@@ -1,10 +1,12 @@
 ﻿using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
+using System.Runtime.CompilerServices;
 
 namespace Benchmark
 {
     [MemoryDiagnoser]
-    [SimpleJob(RuntimeMoniker.Net70)]
+    [SimpleJob(RuntimeMoniker.Net10_0)]
+    [SimpleJob(RuntimeMoniker.NativeAot10_0)]
     [HideColumns("Error", "StdDev", "Median", "RatioSD", "Gen0", "Gen1", "Gen2")]
     public partial class CompareStringBuildersClear
     {
@@ -19,7 +21,23 @@ namespace Benchmark
             _str = new string('S', StrLength);
         }
 
-        [Benchmark(Baseline = true, Description = "StringBuilder")]
+        [Benchmark(Baseline = true, Description = "StringBuilderArray")]
+        public void StringBuilderArray()
+        {
+            var sb = new StringBuilderArray.StringBuilderArray();
+            for (int i = 0; i < 1000; i++)
+            {
+                sb.AppendLine(_str);
+            }
+
+            sb.Clear();
+            for (int i = 0; i < 1000; i++)
+            {
+                sb.AppendLine(_str);
+            }
+        }
+
+        [Benchmark(Description = "StringBuilder")]
         public void StringBuilder()
         {
             var sb = new System.Text.StringBuilder();
@@ -35,19 +53,19 @@ namespace Benchmark
             }
         }
 
-        [Benchmark(Description = "StringBuilderArray")]
-        public void StringBuilderArray()
+        [Benchmark(Description = "DefaultInterpolatedStringHandler")]
+        public void DefaultInterpolatedStringHandler()
         {
-            var sb = new StringBuilderArray.StringBuilderArray();
+            var sb = new DefaultInterpolatedStringHandler();
             for (int i = 0; i < 1000; i++)
             {
-                sb.AppendLine(_str);
+                sb.AppendLiteral(_str);
             }
 
             sb.Clear();
             for (int i = 0; i < 1000; i++)
             {
-                sb.AppendLine(_str);
+                sb.AppendLiteral(_str);
             }
         }
     }

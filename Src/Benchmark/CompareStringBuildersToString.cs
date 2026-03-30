@@ -1,10 +1,12 @@
 ﻿using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
+using System.Runtime.CompilerServices;
 
 namespace Benchmark
 {
     [MemoryDiagnoser]
-    [SimpleJob(RuntimeMoniker.Net80)]
+    [SimpleJob(RuntimeMoniker.Net10_0)]
+    [SimpleJob(RuntimeMoniker.NativeAot10_0)]
     [HideColumns("Error", "StdDev", "Median", "RatioSD", "Gen0", "Gen1", "Gen2")]
     public partial class CompareStringBuildersToString
     {
@@ -32,16 +34,16 @@ namespace Benchmark
             }
         }
 
-        [Benchmark(Baseline = true, Description = "StringBuilder")]
-        public void StringBuilder()
-        {
-            _sb.ToString();
-        }
-
-        [Benchmark(Description = "StringBuilderArray")]
+        [Benchmark(Baseline = true, Description = "StringBuilderArray")]
         public void StringBuilderArray()
         {
             _sbArr.ToString();
+        }
+
+        [Benchmark(Description = "StringBuilder")]
+        public void StringBuilder()
+        {
+            _sb.ToString();
         }
     }
 }
