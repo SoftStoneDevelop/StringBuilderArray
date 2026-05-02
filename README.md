@@ -11,4 +11,8 @@
 
 </h3>
 
+<h3 align="center">
+  <a href="https://github.com/SoftStoneDevelop/StringBuilderArray/blob/main/Benchmark.md">Benchmarks</a>
+</h3>
+
 Collect the resulting string without allocating memory.
