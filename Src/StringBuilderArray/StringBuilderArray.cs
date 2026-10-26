@@ -347,7 +347,7 @@ namespace StringBuilderArray
                     var valSpan = buffer[bufferIndex].AsSpan();
                     for (int i = valSpan.Length - 1; i >= 0; i--)
                     {
-                        if (valSpan[i] != searchStr[indexInsearchStr--])
+                        if (indexInsearchStr < 0 || valSpan[i] != searchStr[indexInsearchStr--])
                         {
                             return false;
                         }

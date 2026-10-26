@@ -43,6 +43,20 @@ namespace StringBuilderArrayTests
 
             Assert.That(sbArr.GetIndex("20"), Is.EqualTo(-1));
         }
+
+        [Test]
+        public void GetIndexSearchShorterThanItem()
+        {
+            var sbArr = new StringBuilderArray.StringBuilderArray();
+            sbArr.Append("12");
+            sbArr.Append("34");
+
+            Assert.That(sbArr.GetIndex("4"), Is.EqualTo(-1));
+            Assert.That(sbArr.GetIndex("2"), Is.EqualTo(-1));
+            Assert.That(sbArr.GetIndex(""), Is.EqualTo(-1));
+            Assert.That(sbArr.GetIndex("34"), Is.EqualTo(0));
+            Assert.That(sbArr.GetIndex("12"), Is.EqualTo(1));
+        }
 #endif
     }
 }
