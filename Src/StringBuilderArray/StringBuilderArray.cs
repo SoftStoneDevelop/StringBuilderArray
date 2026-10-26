@@ -10,7 +10,7 @@ using System.Runtime.CompilerServices;
 
 namespace StringBuilderArray
 {
-    public class StringBuilderArray : IEnumerable<string>
+    public sealed class StringBuilderArray : IEnumerable<string>
     {
         private StringBuilderArray _previous;
         private StringBuilderArray _next;
@@ -317,7 +317,7 @@ namespace StringBuilderArray
         /// <summary>
         /// Search string in builder(not full-text search, compares only parts of which were filled)
         /// </summary>
-        /// <returns>return index fron the end; -1 if not found</returns>
+        /// <returns>return index from the end; -1 if not found</returns>
         public int GetIndex(string searchStr)
         {
             var index = 0;
@@ -354,7 +354,7 @@ namespace StringBuilderArray
 
 #if NET6_0_OR_GREATER
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool IsTheSameSequence(StringBuilderArray current, int bufferIndex, ReadOnlySpan<char> searchStr)
+        private static bool IsTheSameSequence(StringBuilderArray current, int bufferIndex, ReadOnlySpan<char> searchStr)
         {
             var indexInsearchStr = searchStr.Length - 1;
             do
