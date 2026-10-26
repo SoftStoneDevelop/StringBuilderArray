@@ -217,13 +217,32 @@ namespace StringBuilderArray
 
         public override string ToString()
         {
-#if NET6_0_OR_GREATER
-            var newStr = string.Create<object>(Length, null, (_, _) => {});
+#if NET5_0_OR_GREATER
+            var newStr = string.Create(
+                Length,
+                this,
+                (dest, state) =>
+                {
+                    int offset = dest.Length;
+                    var current = state;
+                    do
+                    {
+                        var buffer = current._buffer.AsSpan(0, current._size);
+                        for (int i = buffer.Length - 1; i >= 0; i--)
+                        {
+                            string source = buffer[i];
+                            offset -= source.Length;
+                            source.AsSpan().CopyTo(dest.Slice(offset, source.Length));
+                        }
+
+                        current = current._previous;
+                    } while (current != null);
+                });
+
+            return newStr;
 #else
             var newStr = StringHelper.FastAllocateString(Length);
-#endif
             int offset = newStr.Length;
-            var destBytes = newStr.Length * sizeof(char);
             var current = this;
 
             unsafe
@@ -241,9 +260,11 @@ namespace StringBuilderArray
                         {
                             var source = buffer[i];
                             offset -= source.Length;
+                            var remainingBytes = (newStr.Length - offset) * sizeof(char);
+                            var bytesToCopy = source.Length * sizeof(char);
                             fixed (char* pSource = source)
                             {
-                                Buffer.MemoryCopy(pSource, pDest + offset, destBytes, source.Length * sizeof(char));
+                                Buffer.MemoryCopy(pSource, pDest + offset, remainingBytes, bytesToCopy);
                             }
                         }
 
@@ -253,6 +274,7 @@ namespace StringBuilderArray
             }
 
             return newStr;
+#endif
         }
 
 #if NET5_0_OR_GREATER
@@ -265,7 +287,6 @@ namespace StringBuilderArray
             }
 
             int offset = length;
-            var destBytes = length * sizeof(char);
             var current = this;
             
             unsafe
@@ -279,9 +300,11 @@ namespace StringBuilderArray
                         {
                             var source = buffer[i];
                             offset -= source.Length;
+                            var remainingBytes = (resultBuffer.Length - offset) * sizeof(char);
+                            var bytesToCopy = source.Length * sizeof(char);
                             fixed (char* pSource = source)
                             {
-                                Buffer.MemoryCopy(pSource, resultPtr + offset, destBytes, source.Length * sizeof(char));
+                                Buffer.MemoryCopy(pSource, resultPtr + offset, remainingBytes, bytesToCopy);
                             }
                         }
 
