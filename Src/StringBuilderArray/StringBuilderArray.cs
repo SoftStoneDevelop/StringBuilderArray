@@ -515,14 +515,30 @@ namespace StringBuilderArray
             }
             else
             {
-                if (current._size < current._buffer.Length && current._size == placeIndex) // have place
+                if (current._size < current._buffer.Length)
                 {
+                    if (current._size != placeIndex)
+                    {
+                        ShiftRight(current._buffer, placeIndex);
+                    }
+
                     current._buffer[placeIndex] = value;
                 }
                 else
                 {
-                    Append(value); // value at 0 index in new chunk
-                    placeIndex = 0;
+                    if (current._size == placeIndex)
+                    {
+                        current.Append(value); // value at 0 index in new chunk
+                        placeIndex = 0;
+                    }
+                    else
+                    {
+                        var lastStr = current._buffer[current._buffer.Length - 1];
+                        ShiftRight(current._buffer, placeIndex);
+                        current._buffer[placeIndex] = value;
+                        current.Append(lastStr);
+                        placeIndex = 1;
+                    }
                 }
 
                 afterIndex = placeIndex + 1;
@@ -530,16 +546,50 @@ namespace StringBuilderArray
 
             if (!string.IsNullOrEmpty(after))
             {
-                if (current._size < current._buffer.Length && current._size == afterIndex) // have place
+                if (current._size < current._buffer.Length)
                 {
+                    if (current._size != afterIndex)
+                    {
+                        ShiftRight(current._buffer, afterIndex);
+                    }
+
                     current._buffer[afterIndex] = after;
                 }
                 else
                 {
-                    Append(after);
+                    if (current._size == afterIndex)
+                    {
+                        current.Append(after);
+                    }
+                    else
+                    {
+                        var lastStr = current._buffer[current._buffer.Length - 1];
+                        ShiftRight(current._buffer, afterIndex);
+                        current._buffer[afterIndex] = after;
+                        current.Append(lastStr);
+                    }
                 }
             }
         }
+
+#if NET6_0_OR_GREATER
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void ShiftRight(Span<string> span, int startIndex)
+        {
+            for (var i = span.Length - 1; i > startIndex; i--)
+            {
+                span[i] = span[i - 1];
+            }
+        }
+#else
+        private static void ShiftRight(string[] buffer, int startIndex)
+        {
+            for (var i = buffer.Length - 1; i > startIndex; i--)
+            {
+                buffer[i] = buffer[i - 1];
+            }
+        }  
+#endif
 
         #region IEnumerable
 
@@ -782,7 +832,7 @@ namespace StringBuilderArray
                 }
                 else if (value is not null)
                 {
-                    _stringBuilder.InsertByIndex(_charIndex, value.ToString(), );
+                    _stringBuilder.InsertByIndex(_charIndex, value.ToString(), _directionIndex);
                 }
             }
 

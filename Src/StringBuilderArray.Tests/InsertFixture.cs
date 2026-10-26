@@ -9,6 +9,7 @@ namespace StringBuilderArrayTests
         {
             yield return new TestCaseData(9, "BeforeEnd").SetName("Before end");
             yield return new TestCaseData(10, "End").SetName("In the end");
+            yield return new TestCaseData(5, "InMiddle").SetName("In the middle");
         }
 
         [TestCaseSource(nameof(AddCases))]
