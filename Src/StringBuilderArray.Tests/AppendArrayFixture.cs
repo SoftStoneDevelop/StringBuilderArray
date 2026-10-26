@@ -43,7 +43,7 @@ namespace StringBuilderArrayTests
             var index = 0;
             foreach (var str in sbArr)
             {
-                Assert.That(str, Is.EqualTo(list[index++]));
+                Assert.That(str, Is.EqualTo(sb[index++]));
             }
         }
 
@@ -53,19 +53,14 @@ namespace StringBuilderArrayTests
         {
             var strBuilded = new string('a', length - 1);
             var sb = new StringBuilder();
-            var list = new List<string>();
-            var listInput = new List<string>();
             for (int i = 0; i < 53; i++)
             {
                 var text = i.ToString() + strBuilded;
-                listInput.Add(text);
-                list.Add(text);
-                list.Add(Environment.NewLine);
                 sb.AppendLine(text);
             }
 
             var sbArr = new StringBuilderArray.StringBuilderArray();
-            sbArr.AppendLine(listInput);
+            sbArr.AppendLine(sb.ToString());
 
             Assert.That(sb.ToString(), Is.EqualTo(sbArr.ToString()));
 #if NET5_0_OR_GREATER
@@ -83,7 +78,7 @@ namespace StringBuilderArrayTests
             var index = 0;
             foreach (var str in sbArr)
             {
-                Assert.That(str, Is.EqualTo(list[index++]));
+                Assert.That(str, Is.EqualTo(sb[index++]));
             }
         }
     }

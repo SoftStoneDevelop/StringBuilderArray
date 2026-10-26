@@ -10,7 +10,7 @@ using System.Runtime.CompilerServices;
 
 namespace StringBuilderArray
 {
-    public sealed class StringBuilderArray : IEnumerable<string>
+    public sealed partial class StringBuilderArray : IEnumerable<char>
     {
         private StringBuilderArray _previous;
         private StringBuilderArray _next;
@@ -49,6 +49,20 @@ namespace StringBuilderArray
 
                     current = current._previous;
                 } while (current != null);
+
+                return result;
+            }
+        }
+
+        private int InstatnceLength
+        {
+            get
+            {
+                var result = 0;
+                for (int i = 0; i < _size; i++)
+                {
+                    result += _buffer[i].Length;
+                }
 
                 return result;
             }
@@ -314,185 +328,222 @@ namespace StringBuilderArray
             }
         }
 #endif
+
+        public enum IndexDirection
+        {
+            Unknown = 0,
+            FromEnd = 1,
+            FromStart = 2
+        }
+
         /// <summary>
-        /// Search string in builder(not full-text search, compares only parts of which were filled)
+        /// Insert a string at the specified index.
         /// </summary>
-        /// <returns>return index from the end; -1 if not found</returns>
-        public int GetIndex(string searchStr)
+        public StringBuilderArray InsertByIndex(int charIndex, string value, IndexDirection direction)
         {
-            var index = 0;
+            var currentCharIndex = 0;
             var current = this;
-            do
+            switch (direction)
             {
-#if NET5_0_OR_GREATER
-                var buffer = current._buffer.AsSpan();
-#else
-                var buffer = current._buffer;
-#endif
-                for (int i = current._size - 1; i >= 0; i--)
+                case IndexDirection.FromEnd:
                 {
-#if NET6_0_OR_GREATER
-                    if (IsTheSameSequence(current, i, searchStr))
+                    do
                     {
-                        return index;
-                    }
-#else
-                    if (buffer[i] == searchStr)
-                    {
-                        return index;
-                    }
-#endif
-
-                    index++;
-                }
-
-                current = current._previous;
-            } while (current != null);
-
-            return -1;
-        }
-
-#if NET6_0_OR_GREATER
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool IsTheSameSequence(StringBuilderArray current, int bufferIndex, ReadOnlySpan<char> searchStr)
-        {
-            var indexInsearchStr = searchStr.Length - 1;
-            do
-            {
-                var buffer = current._buffer.AsSpan();
-                if (bufferIndex == -1)
-                {
-                    bufferIndex = current._size - 1;
-                }
-
-                for (; bufferIndex >= 0; bufferIndex--)
-                {
-                    var valSpan = buffer[bufferIndex].AsSpan();
-                    for (int i = valSpan.Length - 1; i >= 0; i--)
-                    {
-                        if (indexInsearchStr < 0 || valSpan[i] != searchStr[indexInsearchStr--])
+                        if (charIndex <= currentCharIndex + current.InstatnceLength)
                         {
-                            return false;
+                            // found a bucket
+                            break;
                         }
 
-                        if (indexInsearchStr == -1 && i == 0)
-                        {
-                            return true;
-                        }
-                    }
-                }
-
-                bufferIndex = -1;
-                current = current._next;
-            } while (current != null);
-
-            return false;
-        }
-#endif
-
-        public bool Insert(int indexFromTheEnd, string value)
-        {
-            var index = 0;
-            var current = this;
-            do
-            {
-                if (indexFromTheEnd <= index + current._size - 1)
-                {
+                        currentCharIndex += current.InstatnceLength;
+                        current = current._previous;
+                    } while (current != null);
                     break;
                 }
 
-                index += current._size;
-                current = current._previous;
-            } while (current != null);
+                case IndexDirection.FromStart:
+                {
+                    while (current._previous != null)
+                    {
+                        current = current._previous;
+                    }
 
-            if (current != null)
-            {
-                var buffer = current._buffer;
-                int shiftIndex = current._size - (indexFromTheEnd - index) - 1;
-                Shift(current, shiftIndex);
+                    do
+                    {
+                        if (charIndex <= currentCharIndex + current.InstatnceLength)
+                        {
+                            // found a bucket
+                            break;
+                        }
 
-                buffer[shiftIndex] = value;
-                return true;
+                        currentCharIndex += current.InstatnceLength;
+                        current = current._next;
+                    } while (current != null);
+                    break;
+                }
+
+                default:
+                {
+                    throw new NotImplementedException();
+                }
             }
 
-            return false;
+            if (current == null)
+            {
+                throw new ArgumentOutOfRangeException(nameof(charIndex));
+            }
+
+            int charIndexInCurrent = charIndex - currentCharIndex;
+            InsertByIndex(current, charIndexInCurrent, value, direction);
+            return this;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Shift(StringBuilderArray current, int index)
+        private void InsertByIndex(
+            StringBuilderArray current,
+            int charIndex,
+            string value,
+            IndexDirection direction = IndexDirection.FromEnd)
         {
-            string movedValue = null;
-#if NET5_0_OR_GREATER
-            Span<string> buffer;
-#else
-            string[] buffer;
-#endif
-
-            do
+            var instanceLength = current.InstatnceLength;
+            if (instanceLength == 0 ||
+                (direction == IndexDirection.FromStart && current.Length == charIndex) ||
+                (direction == IndexDirection.FromEnd && charIndex == 0))
             {
-                if(current == null)
+                current.Append(value);
+                return;
+            }
+
+            var insertIndex = -1;
+            int charIndexInInserted = 0;
+            switch (direction)
+            {
+                case IndexDirection.FromEnd:
                 {
-                    MakeThisPrevious();
-                    Append(movedValue);
-                    movedValue = null;
+                    var currentCharIndex = 0;
+                    for (int i = current._buffer.Length - 1; i >=0; i--)
+                    {
+                        var currentBuffer = current._buffer[i];
+                        if (charIndex <= currentCharIndex + currentBuffer.Length)
+                        {
+                            insertIndex = i;
+                            charIndexInInserted = charIndex - currentCharIndex;
+                            break;
+                        }
+
+                        currentCharIndex += currentBuffer.Length;
+                    }
+
                     break;
                 }
 
-#if NET5_0_OR_GREATER
-                buffer = current._buffer.AsSpan();
-#else
-                buffer = current._buffer;
-#endif
-
-                if (buffer.Length == current._size)
+                case IndexDirection.FromStart:
                 {
-                    movedValue = buffer[buffer.Length - 1];
-#if NET5_0_OR_GREATER
-                    ShiftRight(buffer);
-#else
-                    ShiftRight();
-#endif
-                    index = 0;
+                    var currentCharIndex = 0;
+                    for (int i = 0; i < current._buffer.Length; i++)
+                    {
+                        var currentBuffer = current._buffer[i];
+                        if (charIndex <= currentCharIndex + currentBuffer.Length)
+                        {
+                            insertIndex = i;
+                            charIndexInInserted = charIndex - currentCharIndex;
+                            break;
+                        }
+
+                        currentCharIndex += currentBuffer.Length;
+                    }
+
+                    break;
+                }
+
+                default:
+                {
+                    throw new NotImplementedException();
+                }
+            }
+
+            if (insertIndex == -1)
+            {
+                throw new ArgumentOutOfRangeException(nameof(charIndex));
+            }
+
+            string before = null;
+            string after = null;
+
+            if (direction == IndexDirection.FromStart)
+            {
+                insertIndex = insertIndex == current._buffer.Length - 1 ? insertIndex : insertIndex + 1;
+            }
+
+            var str = current._buffer[insertIndex];
+            if (str.Length == 1)
+            {
+                after = str;
+            }
+            else
+            {
+                switch (direction)
+                {
+                    case IndexDirection.FromEnd:
+                    {
+                        before = charIndexInInserted == str.Length ? null : str.Substring(0, str.Length - charIndexInInserted);
+                        after = charIndexInInserted == 0 ? null : str.Substring(str.Length - charIndexInInserted);
+                        break;
+                    }
+
+                    case IndexDirection.FromStart:
+                    {
+                        before = charIndexInInserted == 0 ? null : str.Substring(0, charIndexInInserted - 1);
+                        after = charIndexInInserted == str.Length ? null : str.Substring(charIndexInInserted);
+                        break;
+                    }
+                }
+            }
+
+            bool beforeExists = !string.IsNullOrEmpty(before);
+            int placeIndex = insertIndex;
+            if (beforeExists)
+            {
+                current._buffer[insertIndex] = before;
+                placeIndex = insertIndex + 1;
+            }
+
+            int afterIndex;
+            if (!beforeExists)
+            {
+                current._buffer[insertIndex] = value;
+                afterIndex = insertIndex + 1;
+            }
+            else
+            {
+                if (current._size < current._buffer.Length && current._size == placeIndex) // have place
+                {
+                    current._buffer[placeIndex] = value;
                 }
                 else
                 {
-#if NET5_0_OR_GREATER
-                    ShiftRight(buffer);
-#else
-                    ShiftRight();
-#endif
-                    buffer[index] = movedValue;
-                    current._size++;
-                    movedValue = null;
-                    break;
+                    Append(value); // value at 0 index in new chunk
+                    placeIndex = 0;
                 }
 
-                current = current._next;
-            } while (true);
+                afterIndex = placeIndex + 1;
+            }
 
-#if NET5_0_OR_GREATER
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            void ShiftRight(Span<string> span)
+            if (!string.IsNullOrEmpty(after))
             {
-                for (var i = span.Length - 1; i > index; i--)
+                if (current._size < current._buffer.Length && current._size == afterIndex) // have place
                 {
-                    span[i] = span[i - 1];
+                    current._buffer[afterIndex] = after;
+                }
+                else
+                {
+                    Append(after);
                 }
             }
-#else
-            void ShiftRight()
-            {
-                for (var i = buffer.Length - 1; i > index; i--)
-                {
-                    buffer[i] = buffer[i - 1];
-                }
-            }
-#endif
         }
 
         #region IEnumerable
 
-        public IEnumerator<string> GetEnumerator()
+        public IEnumerator<char> GetEnumerator()
         {
             return new StringBuilderArrayEnumerator(this);
         }
@@ -500,74 +551,6 @@ namespace StringBuilderArray
         IEnumerator IEnumerable.GetEnumerator()
         {
             return new StringBuilderArrayEnumerator(this);
-        }
-
-        public struct StringBuilderArrayEnumerator : IEnumerator<string>
-        {
-            private StringBuilderArray _currentChunk;
-            private int _currentIndex;
-            private string _current;
-
-            public StringBuilderArrayEnumerator(StringBuilderArray stringBuilderArray)
-            {
-                _currentIndex = 0;
-                _current = null;
-
-                var tempChunk = stringBuilderArray;
-                do
-                {
-                    _currentChunk = tempChunk;
-                    tempChunk = _currentChunk._previous;
-                } while (tempChunk != null);
-            }
-
-#if NET5_0_OR_GREATER
-            readonly public string Current => _current;
-
-            readonly object IEnumerator.Current => _current;
-#else
-            public string Current => _current;
-
-            object IEnumerator.Current => _current;
-#endif
-
-            public void Dispose()
-            {
-                _currentChunk = null;
-                _current = null;
-            }
-
-            public bool MoveNext()
-            {
-                if(_currentChunk._size == 0)
-                {
-                    return false;
-                }
-
-                if (_currentChunk._size == _currentIndex)
-                {
-                    _currentIndex = 0;
-                    _currentChunk = _currentChunk._next;
-                }
-
-                if (_currentChunk == null || _currentChunk._size == 0)
-                {
-                    return false;
-                }
-
-                if (_currentChunk._size == 0)
-                {
-                    return false;
-                }
-
-                _current = _currentChunk._buffer[_currentIndex++];
-                return true;
-            }
-
-            public void Reset()
-            {
-                throw new NotImplementedException();
-            }
         }
 
         #endregion
@@ -582,9 +565,9 @@ namespace StringBuilderArray
 
         public StringBuilderArray AppendLine(IFormatProvider provider, [InterpolatedStringHandlerArgument("", "provider")] ref StringBuilderArrayStringHandler handler) => AppendLine();
 
-        public StringBuilderArray Insert(int indexFromTheEnd, [InterpolatedStringHandlerArgument("", "indexFromTheEnd")] ref StringBuilderArrayInsertStringHandler handler) => this;
+        public StringBuilderArray InsertByIndex(int charIndex, IndexDirection directionIndex, [InterpolatedStringHandlerArgument("", "charIndex", "directionIndex")] ref StringBuilderArrayInsertStringHandler handler) => this;
 
-        public StringBuilderArray Insert(IFormatProvider provider, int indexFromTheEnd, [InterpolatedStringHandlerArgument("", "provider", "indexFromTheEnd")] ref StringBuilderArrayInsertStringHandler handler) => this;
+        public StringBuilderArray InsertByIndex(IFormatProvider provider, int charIndex, IndexDirection directionIndex, [InterpolatedStringHandlerArgument("", "provider", "charIndex", "directionIndex")] ref StringBuilderArrayInsertStringHandler handler) => this;
 
         internal static readonly string _whitespace = " ";
 
@@ -734,25 +717,39 @@ namespace StringBuilderArray
             private readonly StringBuilderArray _stringBuilder;
             private readonly IFormatProvider _provider;
             private readonly bool _hasCustomFormatter;
-            private int _indexFromTheEnd;
+            private readonly int _charIndex;
+            private readonly IndexDirection _directionIndex;
 
-            public StringBuilderArrayInsertStringHandler(int literalLength, int formattedCount, StringBuilderArray stringBuilder, int indexFromTheEnd)
+            public StringBuilderArrayInsertStringHandler(
+                int literalLength,
+                int formattedCount,
+                StringBuilderArray stringBuilder,
+                int charIndex,
+                IndexDirection directionIndex)
             {
                 _stringBuilder = stringBuilder;
                 _provider = null;
                 _hasCustomFormatter = false;
-                _indexFromTheEnd = indexFromTheEnd;
+                _charIndex = charIndex;
+                _directionIndex = directionIndex;
             }
 
-            public StringBuilderArrayInsertStringHandler(int literalLength, int formattedCount, StringBuilderArray stringBuilder, IFormatProvider provider, int indexFromTheEnd)
+            public StringBuilderArrayInsertStringHandler(
+                int literalLength,
+                int formattedCount,
+                StringBuilderArray stringBuilder,
+                IFormatProvider provider,
+                int charIndex,
+                IndexDirection directionIndex)
             {
                 _stringBuilder = stringBuilder;
                 _provider = provider;
                 _hasCustomFormatter = provider is not null && HasCustomFormatter(provider);
-                _indexFromTheEnd = indexFromTheEnd;
+                _charIndex = charIndex;
+                _directionIndex = directionIndex;
             }
 
-            public void AppendLiteral(string value) => _stringBuilder.Insert(_indexFromTheEnd, value);
+            public void AppendLiteral(string value) => _stringBuilder.InsertByIndex(_charIndex, value, _directionIndex);
 
             #region AppendFormatted
 
@@ -765,11 +762,11 @@ namespace StringBuilderArray
                 }
                 else if (value is IFormattable)
                 {
-                    _stringBuilder.Insert(_indexFromTheEnd, ((IFormattable)value).ToString(format: null, _provider));
+                    _stringBuilder.InsertByIndex(_charIndex, ((IFormattable)value).ToString(format: null, _provider), _directionIndex);
                 }
                 else if (value is not null)
                 {
-                    _stringBuilder.Insert(_indexFromTheEnd, value.ToString());
+                    _stringBuilder.InsertByIndex(_charIndex, value.ToString(), _directionIndex);
                 }
             }
 
@@ -779,13 +776,13 @@ namespace StringBuilderArray
                 {
                     AppendCustomFormatter(value, format);
                 }
-                else if (value is IFormattable)
+                else if (value is IFormattable formattable)
                 {
-                    _stringBuilder.Insert(_indexFromTheEnd, ((IFormattable)value).ToString(format, _provider));
+                    _stringBuilder.InsertByIndex(_charIndex, formattable.ToString(format, _provider), _directionIndex);
                 }
                 else if (value is not null)
                 {
-                    _stringBuilder.Insert(_indexFromTheEnd, value.ToString());
+                    _stringBuilder.InsertByIndex(_charIndex, value.ToString(), );
                 }
             }
 
@@ -806,7 +803,7 @@ namespace StringBuilderArray
                     {
                         for (int i = 0; i < paddingRequired; i++)
                         {
-                            _stringBuilder.Insert(_indexFromTheEnd, _whitespace);
+                            _stringBuilder.InsertByIndex(_charIndex, _whitespace, _directionIndex);
                         }
                     }
                 }
@@ -814,7 +811,7 @@ namespace StringBuilderArray
                 {
                     for (int i = 0; i < alignment; i++)
                     {
-                        _stringBuilder.Insert(_indexFromTheEnd, _whitespace);
+                        _stringBuilder.InsertByIndex(_charIndex, _whitespace, _directionIndex);
                     }
                     AppendFormatted(value, format);
                 }
@@ -826,7 +823,7 @@ namespace StringBuilderArray
             {
                 if (!_hasCustomFormatter)
                 {
-                    _stringBuilder.Insert(_indexFromTheEnd, value);
+                    _stringBuilder.InsertByIndex(_charIndex, value, _directionIndex);
                 }
                 else
                 {
@@ -854,7 +851,7 @@ namespace StringBuilderArray
 
                 if (formatter is not null)
                 {
-                    _stringBuilder.Insert(_indexFromTheEnd, formatter.Format(format, value, _provider));
+                    _stringBuilder.InsertByIndex(_charIndex, formatter.Format(format, value, _provider), _directionIndex);
                 }
             }
 

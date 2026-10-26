@@ -1,6 +1,5 @@
 ﻿using NUnit.Framework;
 using System;
-using System.Collections.Generic;
 using System.Text;
 
 namespace StringBuilderArrayTests
@@ -97,14 +96,14 @@ namespace StringBuilderArrayTests
         public void AppendEnumerableTest(int length)
         {
             var strBuilded = new string('a', length - 1);
-            var list = new List<string>();
+            string expect = string.Empty;
+            var builder = new StringBuilder();
             for (int i = 0; i < 53; i++)
             {
                 var text = i.ToString() + strBuilded;
-                list.Add(text);
+                builder.Append(text);
 #if NET6_0_OR_GREATER
-                list.Add("Interpool ");
-                list.Add(i.ToString());
+                builder.Append($"Interpool {i}");
 #endif
             }
 
@@ -120,7 +119,7 @@ namespace StringBuilderArrayTests
             var index = 0;
             foreach (var str in sbArr)
             {
-                Assert.That(str, Is.EqualTo(list[index++]));
+                Assert.That(str, Is.EqualTo(builder[index++]));
             }
         }
     }

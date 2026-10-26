@@ -29,13 +29,13 @@ namespace Benchmark
                 sb.Append(_str);
             }
 
-            sb.Insert(0, _str);
+            //sb.InsertByIndex(0, _str);
 
-            //in start
-            sb.Insert(100, _str);
+            ////in start
+            //sb.InsertByIndex(100, _str);
 
-            //after 5 str from start
-            sb.Insert(96, _str);
+            ////after 5 str from start
+            //sb.InsertByIndex(96, _str);
         }
 
         [Benchmark(Description = "StringBuilder")]
