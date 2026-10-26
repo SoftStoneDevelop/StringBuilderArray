@@ -114,7 +114,7 @@ namespace StringBuilderArray
                 _previous = tempPrev;
 
                 tempPrev._next = this;
-                if(tempPrev._previous != null)
+                if (tempPrev._previous != null)
                 {
                     tempPrev._previous._next = tempPrev;
                 }
@@ -206,7 +206,7 @@ namespace StringBuilderArray
 
             var tempPr = _previous;
             _previous = null;
-            if(tempPr._previous != null)
+            if (tempPr._previous != null)
             {
                 tempPr._previous._next = tempPr;
             }
@@ -259,7 +259,7 @@ namespace StringBuilderArray
         public void ToString(Span<char> resultBuffer)
         {
             var length = Length;
-            if (length < resultBuffer.Length)
+            if (resultBuffer.Length < length)
             {
                 throw new ArgumentException($"{nameof(resultBuffer)} length less than {nameof(Length)}");
             }
