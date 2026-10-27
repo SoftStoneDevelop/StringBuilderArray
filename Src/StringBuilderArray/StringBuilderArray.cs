@@ -16,18 +16,20 @@ namespace StringBuilderArray
         private StringBuilderArray _next;
         private string[] _buffer;
         private int _size;
+        private int _instatnceLength;
 
-        internal const int MaxChunkSize = 8000;
+        internal const int MaxChunkSize = 4000;
 
         public StringBuilderArray(int bufferSize = 10)
         {
             _buffer = new string[bufferSize];
         }
 
-        public StringBuilderArray(string[] buffer, int usedSize)
+        public StringBuilderArray(string[] buffer, int usedSize, int instatnceLength)
         {
             _buffer = buffer;
             _size = usedSize;
+            _instatnceLength = instatnceLength;
         }
 
         private StringBuilderArray()
@@ -42,27 +44,9 @@ namespace StringBuilderArray
                 var current = this;
                 do
                 {
-                    for (int i = 0; i < current._size; i++)
-                    {
-                        result += current._buffer[i].Length;
-                    }
-
+                    result += current._instatnceLength;
                     current = current._previous;
                 } while (current != null);
-
-                return result;
-            }
-        }
-
-        private int InstatnceLength
-        {
-            get
-            {
-                var result = 0;
-                for (int i = 0; i < _size; i++)
-                {
-                    result += _buffer[i].Length;
-                }
 
                 return result;
             }
@@ -72,57 +56,53 @@ namespace StringBuilderArray
         {
             if (_size == _buffer.Length)
             {
-                MakeThisPrevious();
+                MakePlace();
+                _buffer[0] = str;
+                _size++;
+            }
+            else
+            {
+                _buffer[_size++] = str;
             }
 
-            _buffer[_size++] = str;
+            _instatnceLength += str.Length;
             return this;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void MakeThisPrevious()
+        private void MakePlace()
         {
-            if(_next != null && _next._size == 0)
+            if(_next != null && _next._size < _next._buffer.Length)
             {
-                /*
-                     * Move data(and prev/next links) between this and emptyNext(empty because outlived Clear)
-                     * before
-                     * (prev)->(this)->(emptyNext)->...
-                     * 
-                     * after
-                     * (prev)->(next)->(emptyNext)->...
-                     * 
-                     */
-
                 var tempBuffer = _buffer;
                 _buffer = _next._buffer;
                 _next._buffer = tempBuffer;
 
                 var tempSize = _size;
+                _size = _next._size;
                 _next._size = tempSize;
-                _size = 0;
 
+                var tempInstatnceLength = _instatnceLength;
+                _instatnceLength = _next._instatnceLength;
+                _next._instatnceLength = tempInstatnceLength;
+
+                _next._previous = _previous;
                 _previous = _next;
-                _next._previous = this;
 
-                var tempNext = _next;
-                _next = tempNext._next;
-                tempNext._next = this;
+                var tempNext = _next._next;
+                _next._next = this;
+                _next = tempNext;
+                if (_size > 0)
+                {
+                    ShiftRight(_buffer);
+                }
             }
             else
             {
-                /* Move data(and prev/next links) between this and newChunk
-                 * before
-                 * (prev)->(this) (newChunk)
-                 * 
-                 * after
-                 * (prev)->(newChunk)->(this)
-                 * 
-                 */
-                var tempPrev = new StringBuilderArray(_buffer, _size);
-                int newBufferLength = Math.Max(10, Math.Min(_buffer.Length * 2, MaxChunkSize));
-                _buffer = new string[newBufferLength];
+                var tempPrev = new StringBuilderArray(_buffer, _size, _instatnceLength);
                 _size = 0;
+                _instatnceLength = 0;
+                _buffer = new string[Math.Max(10, Math.Min(_buffer.Length * 2, MaxChunkSize))];
 
                 tempPrev._previous = _previous;
                 _previous = tempPrev;
@@ -134,6 +114,25 @@ namespace StringBuilderArray
                 }
             }
         }
+
+#if NET6_0_OR_GREATER
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void ShiftRight(Span<string> span)
+        {
+            for (var i = span.Length - 1; i > 0; i--)
+            {
+                span[i] = span[i - 1];
+            }
+        }
+#else
+        private static void ShiftRight(string[] buffer)
+        {
+            for (var i = buffer.Length - 1; i > 0; i--)
+            {
+                buffer[i] = buffer[i - 1];
+            }
+        }  
+#endif
 
         public StringBuilderArray AppendLine(string str)
         {
@@ -169,69 +168,78 @@ namespace StringBuilderArray
 
         public StringBuilderArray Clear()
         {
-            if(_previous == null && _next == null)
-            {
-                _size = 0;
+            _size = 0;
+            _instatnceLength = 0;
 #if NET6_0_OR_GREATER
-                Array.Clear(_buffer);
+            Array.Clear(_buffer);
 #else
-                Array.Clear(_buffer, 0, _buffer.Length);
+            Array.Clear(_buffer, 0, _buffer.Length);
 #endif
+            if (_previous == null && _next == null)
+            {
                 return this;
             }
 
-            StringBuilderArray head = null;
-            var current = this;
-            do
-            {
-                head = current;
-                current._size = 0;
-#if NET6_0_OR_GREATER
-                Array.Clear(current._buffer);
-#else
-                Array.Clear(current._buffer, 0, current._buffer.Length);
-#endif
-                current = current._previous;
-            } while (current != null);
-
-            current = this._next;
-            while (current != null)
-            {
-                current._size = 0;
-#if NET6_0_OR_GREATER
-                Array.Clear(current._buffer);
-#else
-                Array.Clear(current._buffer, 0, current._buffer.Length);
-#endif
-                current = current._next;
-            }
-
-            /* Move data(and prev/next links) between head and tail
-                 * before
-                 * (head)->...->(prev)->(this)
-                 * 
-                 * after
-                 * (this)->...->(prev)->(head)
-                 * 
-                 */
-            var tempBuffer = _buffer;
-            _buffer = head._buffer;
-            head._buffer = tempBuffer;
-
-            var tempPr = _previous;
+            var tailPrevious = _previous;
+            var currentPrevious = _previous;
+            var currentNext = this._next;
             _previous = null;
-            if (tempPr._previous != null)
+            if (tailPrevious != null)
             {
-                tempPr._previous._next = tempPr;
+                tailPrevious._next = _next;
             }
-            head._previous = tempPr;
+
+            while (currentPrevious != null)
+            {
+                currentPrevious._size = 0;
+                currentPrevious._instatnceLength = 0;
+#if NET6_0_OR_GREATER
+                Array.Clear(currentPrevious._buffer);
+#else
+                Array.Clear(currentPrevious._buffer, 0, currentPrevious._buffer.Length);
+#endif
+                if (currentPrevious._previous == null)
+                {
+                    currentPrevious._previous = this;
+                    _next = currentPrevious;
+                    break;
+                }
+                else
+                {
+                    currentPrevious = currentPrevious._previous;
+                }
+            }
+
+            if (currentNext != null && tailPrevious != null)
+            {
+                currentNext._previous = tailPrevious;
+            }
+            
+            while (currentNext != null)
+            {
+                currentNext._size = 0;
+                currentNext._instatnceLength = 0;
+#if NET6_0_OR_GREATER
+                Array.Clear(currentNext._buffer);
+#else
+                Array.Clear(currentNext._buffer, 0, currentNext._buffer.Length);
+#endif
+                if (currentNext._next == null)
+                {
+                    break;
+                }
+                else
+                {
+                    currentNext = currentNext._next;
+                }
+            }
 
             return this;
         }
 
         public override string ToString()
         {
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
             var newStr = string.Create(
                 Length,
                 this,
@@ -242,11 +250,11 @@ namespace StringBuilderArray
                     do
                     {
                         var buffer = current._buffer.AsSpan(0, current._size);
-                        for (int i = buffer.Length - 1; i >= 0; i--)
+                        for (int i = current._size - 1; i >= 0; i--)
                         {
-                            string source = buffer[i];
-                            offset -= source.Length;
-                            source.AsSpan().CopyTo(dest.Slice(offset, source.Length));
+                            var sourceSpan = buffer[i];
+                            offset -= sourceSpan.Length;
+                            sourceSpan.CopyTo(dest.Slice(offset, sourceSpan.Length));
                         }
 
                         current = current._previous;
@@ -328,6 +336,7 @@ namespace StringBuilderArray
             }
         }
 #endif
+
         /// <summary>
         /// Insert a string at the specified index.
         /// </summary>
@@ -341,13 +350,13 @@ namespace StringBuilderArray
             var current = this;
             do
             {
-                if (charIndex <= currentCharIndex + current.InstatnceLength)
+                if (charIndex <= currentCharIndex + current._instatnceLength)
                 {
                     // found a bucket
                     break;
                 }
 
-                currentCharIndex += current.InstatnceLength;
+                currentCharIndex += current._instatnceLength;
                 current = current._previous;
             } while (current != null);
 
@@ -357,20 +366,17 @@ namespace StringBuilderArray
             }
 
             int charIndexInCurrent = charIndex - currentCharIndex;
-            InsertByIndex(current, charIndexInCurrent, value);
-            return this;
+            return InsertByIndex(current, charIndexInCurrent, value);
         }
 
-        private void InsertByIndex(
+        private StringBuilderArray InsertByIndex(
             StringBuilderArray current,
             int charIndex,
             string value)
         {
-            var instanceLength = current.InstatnceLength;
-            if (instanceLength == 0 || charIndex == 0)
+            if (current._instatnceLength == 0 || charIndex == 0)
             {
-                current.Append(value);
-                return;
+                return current.Append(value);
             }
 
             var insertIndex = -1;
@@ -395,6 +401,7 @@ namespace StringBuilderArray
             }
 
             var str = current._buffer[insertIndex];
+            current._instatnceLength -= str.Length;
             string before = charIndexInInserted == str.Length ? null : str.Substring(0, str.Length - charIndexInInserted);
             string after = charIndexInInserted == 0 ? null : str.Substring(str.Length - charIndexInInserted);
 
@@ -409,18 +416,23 @@ namespace StringBuilderArray
             for (int i = insertIndex + 1; i < current._size; i++)
             {
                 insertQueue.Enqueue(current._buffer[i]);
+                current._instatnceLength -= current._buffer[i].Length;
             }
 
             current._size = insertIndex;
             while (insertQueue.Count > 0 && current._size < current._buffer.Length)
             {
-                current._buffer[current._size++] = insertQueue.Dequeue();
+                var insertedString = insertQueue.Dequeue();
+                current._buffer[current._size++] = insertedString;
+                current._instatnceLength += insertedString.Length;
             }
 
             while (insertQueue.Count > 0)
             {
                 current = current.Append(insertQueue.Dequeue());
             }
+
+            return current;
         }
 
         #region IEnumerable

@@ -7,10 +7,10 @@ namespace Benchmark
     [MemoryDiagnoser]
     [SimpleJob(RuntimeMoniker.Net10_0)]
     [SimpleJob(RuntimeMoniker.NativeAot10_0)]
-    [HideColumns("Error", "StdDev", "Median", "RatioSD", "Gen0", "Gen1", "Gen2")]
+    [HideColumns("Error", "StdDev", "RatioSD")]
     public partial class CompareStringBuilders
     {
-        [Params(5, 7, 10, 50, 100, 1000, 2500, 5_000, 10_000, 100_000, 500_000, 1_071_741)]
+        [Params(100, 1000, 10_000, 100_000)]
         public int StrLength;
 
         private string _str;
