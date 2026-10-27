@@ -82,17 +82,17 @@ namespace StringBuilderArray
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void MakeThisPrevious()
         {
-            if(_next != null)
+            if(_next != null && _next._size == 0)
             {
                 /*
-                 * Move data(and prev/next links) between this and emptyNext(empty because outlived Clear)
-                 * before
-                 * (prev)->(this)->(emptyNext)->...
-                 * 
-                 * after
-                 * (prev)->(next)->(emptyNext)->...
-                 * 
-                 */
+                     * Move data(and prev/next links) between this and emptyNext(empty because outlived Clear)
+                     * before
+                     * (prev)->(this)->(emptyNext)->...
+                     * 
+                     * after
+                     * (prev)->(next)->(emptyNext)->...
+                     * 
+                     */
 
                 var tempBuffer = _buffer;
                 _buffer = _next._buffer;
@@ -341,52 +341,23 @@ namespace StringBuilderArray
         /// </summary>
         public StringBuilderArray InsertByIndex(int charIndex, string value, IndexDirection direction)
         {
+            charIndex =
+                direction == IndexDirection.FromStart ? Length - charIndex
+                : charIndex;
+
             var currentCharIndex = 0;
             var current = this;
-            switch (direction)
+            do
             {
-                case IndexDirection.FromEnd:
+                if (charIndex <= currentCharIndex + current.InstatnceLength)
                 {
-                    do
-                    {
-                        if (charIndex <= currentCharIndex + current.InstatnceLength)
-                        {
-                            // found a bucket
-                            break;
-                        }
-
-                        currentCharIndex += current.InstatnceLength;
-                        current = current._previous;
-                    } while (current != null);
+                    // found a bucket
                     break;
                 }
 
-                case IndexDirection.FromStart:
-                {
-                    while (current._previous != null)
-                    {
-                        current = current._previous;
-                    }
-
-                    do
-                    {
-                        if (charIndex <= currentCharIndex + current.InstatnceLength)
-                        {
-                            // found a bucket
-                            break;
-                        }
-
-                        currentCharIndex += current.InstatnceLength;
-                        current = current._next;
-                    } while (current != null);
-                    break;
-                }
-
-                default:
-                {
-                    throw new NotImplementedException();
-                }
-            }
+                currentCharIndex += current.InstatnceLength;
+                current = current._previous;
+            } while (current != null);
 
             if (current == null)
             {
@@ -394,20 +365,17 @@ namespace StringBuilderArray
             }
 
             int charIndexInCurrent = charIndex - currentCharIndex;
-            InsertByIndex(current, charIndexInCurrent, value, direction);
+            InsertByIndex(current, charIndexInCurrent, value);
             return this;
         }
 
         private void InsertByIndex(
             StringBuilderArray current,
             int charIndex,
-            string value,
-            IndexDirection direction = IndexDirection.FromEnd)
+            string value)
         {
             var instanceLength = current.InstatnceLength;
-            if (instanceLength == 0 ||
-                (direction == IndexDirection.FromStart && current.Length == charIndex) ||
-                (direction == IndexDirection.FromEnd && charIndex == 0))
+            if (instanceLength == 0 || charIndex == 0)
             {
                 current.Append(value);
                 return;
@@ -415,50 +383,18 @@ namespace StringBuilderArray
 
             var insertIndex = -1;
             int charIndexInInserted = 0;
-            switch (direction)
+            var currentCharIndex = 0;
+            for (int i = current._size - 1; i >= 0; i--)
             {
-                case IndexDirection.FromEnd:
+                var currentBuffer = current._buffer[i];
+                if (charIndex <= currentCharIndex + currentBuffer.Length)
                 {
-                    var currentCharIndex = 0;
-                    for (int i = current._buffer.Length - 1; i >=0; i--)
-                    {
-                        var currentBuffer = current._buffer[i];
-                        if (charIndex <= currentCharIndex + currentBuffer.Length)
-                        {
-                            insertIndex = i;
-                            charIndexInInserted = charIndex - currentCharIndex;
-                            break;
-                        }
-
-                        currentCharIndex += currentBuffer.Length;
-                    }
-
+                    insertIndex = i;
+                    charIndexInInserted = charIndex - currentCharIndex;
                     break;
                 }
 
-                case IndexDirection.FromStart:
-                {
-                    var currentCharIndex = 0;
-                    for (int i = 0; i < current._buffer.Length; i++)
-                    {
-                        var currentBuffer = current._buffer[i];
-                        if (charIndex <= currentCharIndex + currentBuffer.Length)
-                        {
-                            insertIndex = i;
-                            charIndexInInserted = charIndex - currentCharIndex;
-                            break;
-                        }
-
-                        currentCharIndex += currentBuffer.Length;
-                    }
-
-                    break;
-                }
-
-                default:
-                {
-                    throw new NotImplementedException();
-                }
+                currentCharIndex += currentBuffer.Length;
             }
 
             if (insertIndex == -1)
@@ -466,130 +402,34 @@ namespace StringBuilderArray
                 throw new ArgumentOutOfRangeException(nameof(charIndex));
             }
 
-            string before = null;
-            string after = null;
-
-            if (direction == IndexDirection.FromStart)
-            {
-                insertIndex = insertIndex == current._buffer.Length - 1 ? insertIndex : insertIndex + 1;
-            }
-
             var str = current._buffer[insertIndex];
-            if (str.Length == 1)
-            {
-                after = str;
-            }
-            else
-            {
-                switch (direction)
-                {
-                    case IndexDirection.FromEnd:
-                    {
-                        before = charIndexInInserted == str.Length ? null : str.Substring(0, str.Length - charIndexInInserted);
-                        after = charIndexInInserted == 0 ? null : str.Substring(str.Length - charIndexInInserted);
-                        break;
-                    }
-
-                    case IndexDirection.FromStart:
-                    {
-                        before = charIndexInInserted == 0 ? null : str.Substring(0, charIndexInInserted - 1);
-                        after = charIndexInInserted == str.Length ? null : str.Substring(charIndexInInserted);
-                        break;
-                    }
-                }
-            }
+            string before = charIndexInInserted == str.Length ? null : str.Substring(0, str.Length - charIndexInInserted);
+            string after = charIndexInInserted == 0 ? null : str.Substring(str.Length - charIndexInInserted);
 
             bool beforeExists = !string.IsNullOrEmpty(before);
-            int placeIndex = insertIndex;
-            if (beforeExists)
+            bool afterExists = !string.IsNullOrEmpty(after);
+
+            var insertQueue = new Queue<string>();
+            if (beforeExists) { insertQueue.Enqueue(before); }
+            insertQueue.Enqueue(value);
+            if (afterExists) { insertQueue.Enqueue(after); }
+
+            for (int i = insertIndex + 1; i < current._size; i++)
             {
-                current._buffer[insertIndex] = before;
-                placeIndex = insertIndex + 1;
+                insertQueue.Enqueue(current._buffer[i]);
             }
 
-            int afterIndex;
-            if (!beforeExists)
+            current._size = insertIndex;
+            while (insertQueue.Count > 0 && current._size < current._buffer.Length)
             {
-                current._buffer[insertIndex] = value;
-                afterIndex = insertIndex + 1;
-            }
-            else
-            {
-                if (current._size < current._buffer.Length)
-                {
-                    if (current._size != placeIndex)
-                    {
-                        ShiftRight(current._buffer, placeIndex);
-                    }
-
-                    current._buffer[placeIndex] = value;
-                }
-                else
-                {
-                    if (current._size == placeIndex)
-                    {
-                        current.Append(value); // value at 0 index in new chunk
-                        placeIndex = 0;
-                    }
-                    else
-                    {
-                        var lastStr = current._buffer[current._buffer.Length - 1];
-                        ShiftRight(current._buffer, placeIndex);
-                        current._buffer[placeIndex] = value;
-                        current.Append(lastStr);
-                        placeIndex = 1;
-                    }
-                }
-
-                afterIndex = placeIndex + 1;
+                current._buffer[current._size++] = insertQueue.Dequeue();
             }
 
-            if (!string.IsNullOrEmpty(after))
+            while (insertQueue.Count > 0)
             {
-                if (current._size < current._buffer.Length)
-                {
-                    if (current._size != afterIndex)
-                    {
-                        ShiftRight(current._buffer, afterIndex);
-                    }
-
-                    current._buffer[afterIndex] = after;
-                }
-                else
-                {
-                    if (current._size == afterIndex)
-                    {
-                        current.Append(after);
-                    }
-                    else
-                    {
-                        var lastStr = current._buffer[current._buffer.Length - 1];
-                        ShiftRight(current._buffer, afterIndex);
-                        current._buffer[afterIndex] = after;
-                        current.Append(lastStr);
-                    }
-                }
+                current = current.Append(insertQueue.Dequeue());
             }
         }
-
-#if NET6_0_OR_GREATER
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void ShiftRight(Span<string> span, int startIndex)
-        {
-            for (var i = span.Length - 1; i > startIndex; i--)
-            {
-                span[i] = span[i - 1];
-            }
-        }
-#else
-        private static void ShiftRight(string[] buffer, int startIndex)
-        {
-            for (var i = buffer.Length - 1; i > startIndex; i--)
-            {
-                buffer[i] = buffer[i - 1];
-            }
-        }  
-#endif
 
         #region IEnumerable
 
