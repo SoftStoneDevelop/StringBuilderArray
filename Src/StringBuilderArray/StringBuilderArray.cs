@@ -82,6 +82,10 @@ namespace StringBuilderArray
                 _next._instatnceLength = tempInstatnceLength;
 
                 _next._previous = _previous;
+                if (_previous != null)
+                {
+                    _previous._next = _next;
+                }
                 _previous = _next;
 
                 var tempNext = _next._next;
@@ -213,7 +217,7 @@ namespace StringBuilderArray
 
             var tailPrevious = _previous;
             var currentPrevious = _previous;
-            var currentNext = this._next;
+            var currentNext = _next;
             _previous = null;
             if (tailPrevious != null)
             {
@@ -241,9 +245,16 @@ namespace StringBuilderArray
                 }
             }
 
-            if (currentNext != null && tailPrevious != null)
+            if (currentNext != null)
             {
-                currentNext._previous = tailPrevious;
+                if (tailPrevious != null)
+                {
+                    currentNext._previous = tailPrevious;
+                }
+                else
+                {
+                    currentNext._previous = this;
+                }
             }
             
             while (currentNext != null)
