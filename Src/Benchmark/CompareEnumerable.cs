@@ -7,7 +7,6 @@ namespace Benchmark
     [MemoryDiagnoser]
     [SimpleJob(RuntimeMoniker.Net10_0)]
     [SimpleJob(RuntimeMoniker.NativeAot10_0)]
-    [HideColumns("Error", "StdDev", "RatioSD")]
     public partial class CompareEnumerable
     {
         [Params(100, 1000, 10_000, 100_000)]
