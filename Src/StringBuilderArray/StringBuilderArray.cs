@@ -283,7 +283,7 @@ namespace StringBuilderArray
                         var buffer = current._buffer.AsSpan(0, current._size);
                         for (int i = current._size - 1; i >= 0; i--)
                         {
-                            var sourceSpan = buffer[i];
+                            var sourceSpan = buffer[i].AsSpan();
                             offset -= sourceSpan.Length;
                             sourceSpan.CopyTo(dest.Slice(offset, sourceSpan.Length));
                         }
@@ -304,11 +304,7 @@ namespace StringBuilderArray
                 {
                     do
                     {
-#if NET5_0_OR_GREATER
-                        var buffer = current._buffer.AsSpan();
-#else
                         var buffer = current._buffer;
-#endif
                         for (int i = current._size - 1; i >= 0; i--)
                         {
                             var source = buffer[i];
@@ -351,7 +347,7 @@ namespace StringBuilderArray
                         var buffer = current._buffer.AsSpan();
                         for (int i = current._size - 1; i >= 0; i--)
                         {
-                            var source = buffer[i];
+                            var source = buffer[i].AsSpan();
                             offset -= source.Length;
                             var remainingBytes = (resultBuffer.Length - offset) * sizeof(char);
                             var bytesToCopy = source.Length * sizeof(char);
