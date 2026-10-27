@@ -328,14 +328,6 @@ namespace StringBuilderArray
             }
         }
 #endif
-
-        public enum IndexDirection
-        {
-            Unknown = 0,
-            FromEnd = 1,
-            FromStart = 2
-        }
-
         /// <summary>
         /// Insert a string at the specified index.
         /// </summary>

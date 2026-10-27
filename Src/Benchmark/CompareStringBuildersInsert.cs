@@ -21,7 +21,7 @@ namespace Benchmark
         }
 
         [Benchmark(Baseline = true, Description = "StringBuilderArray")]
-        public void StringBuilderArray()
+        public void MineStringBuilderArray()
         {
             var sb = new StringBuilderArray.StringBuilderArray();
             for (int i = 0; i < 100; i++)
@@ -29,13 +29,13 @@ namespace Benchmark
                 sb.Append(_str);
             }
 
-            //sb.InsertByIndex(0, _str);
+            sb.InsertByIndex(99 * _str.Length, _str, StringBuilderArray.IndexDirection.FromStart);
 
-            ////in start
-            //sb.InsertByIndex(100, _str);
+            //in start
+            sb.InsertByIndex(0, _str, StringBuilderArray.IndexDirection.FromStart);
 
-            ////after 5 str from start
-            //sb.InsertByIndex(96, _str);
+            //after 5 str from start
+            sb.InsertByIndex(5 * _str.Length, _str, StringBuilderArray.IndexDirection.FromStart);
         }
 
         [Benchmark(Description = "StringBuilder")]

@@ -1,6 +1,5 @@
 ﻿using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
-using System.Runtime.CompilerServices;
 
 namespace Benchmark
 {

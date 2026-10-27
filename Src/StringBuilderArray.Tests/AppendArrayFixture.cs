@@ -39,7 +39,6 @@ namespace StringBuilderArrayTests
                 Assert.That(haveChar, Is.EqualTo(expectChar));
             }
 #endif
-
             var index = 0;
             foreach (var str in sbArr)
             {
@@ -53,16 +52,18 @@ namespace StringBuilderArrayTests
         {
             var strBuilded = new string('a', length - 1);
             var sb = new StringBuilder();
+            var lines = new List<string>();
             for (int i = 0; i < 53; i++)
             {
                 var text = i.ToString() + strBuilded;
+                lines.Add(text);
                 sb.AppendLine(text);
             }
 
             var sbArr = new StringBuilderArray.StringBuilderArray();
-            sbArr.AppendLine(sb.ToString());
+            sbArr.AppendLine(lines);
 
-            Assert.That(sb.ToString(), Is.EqualTo(sbArr.ToString()));
+            Assert.That(sbArr.ToString(), Is.EqualTo(sb.ToString()));
 #if NET5_0_OR_GREATER
             var expectSpan = sb.ToString().AsSpan();
             var resultSpan = GC.AllocateUninitializedArray<char>(sbArr.Length);
