@@ -5,130 +5,71 @@ namespace StringBuilderArrayTests
 {
     internal class InsertFixture
     {
-        [Test]
-        public void Insert()
+        private static IEnumerable<TestCaseData> AddCases()
         {
-            var expect = new List<string>()
-            {
-                "0", "1","2","3","4","5","6","7","8","9"
-            };//count 10
-
-            var sbArr = new StringBuilderArray.StringBuilderArray();
-            for (int i = 0; i < 10; i++)
-            {
-                sbArr.Append(i.ToString());
-            }
-
-            expect.Insert(expect.Count - 1, "Secret before end");
-            //count 11
-            sbArr.Insert(0, "Secret before end");
-
-            var index = 0;
-            foreach (var str in sbArr)
-            {
-                Assert.That(str, Is.EqualTo(expect[index++]));
-            }
-
-            expect.Insert(0, "Secret start");
-            //count 12
-            sbArr.Insert(10, "Secret start");
-
-            index = 0;
-            foreach (var str in sbArr)
-            {
-                Assert.That(str, Is.EqualTo(expect[index++]));
-            }
-
-            expect.Insert(1, "Secret index 1");
-            //count 13
-            sbArr.Insert(10, "Secret index 1");
-
-            index = 0;
-            foreach (var str in sbArr)
-            {
-                Assert.That(str, Is.EqualTo(expect[index++]));
-            }
-
-            expect.Insert(9, "Secret index 9");
-            //count 14
-            sbArr.Insert(3, "Secret index 9");
-
-            index = 0;
-            foreach (var str in sbArr)
-            {
-                Assert.That(str, Is.EqualTo(expect[index++]));
-            }
+            yield return new TestCaseData(9, "BeforeEnd").SetName("Before end");
+            yield return new TestCaseData(10, "End").SetName("In the end");
+            yield return new TestCaseData(5, "InMiddle").SetName("In the middle");
+            yield return new TestCaseData(0, "Start").SetName("On start");
+            yield return new TestCaseData(1, "Second").SetName("Second");
         }
 
-#if NET6_0_OR_GREATER
-        [Test]
-        public void InsertInterpool()
+        [TestCaseSource(nameof(AddCases))]
+        public void Insert(int insertIndexFromStart, string insertValue)
         {
-            var literal = "top";
-            var expect = new List<string>()
-            {
-                "Number ", "0",
-                "Number ", "1",
-                "Number ", "2",
-                "Number ", "3",
-                "Number ", "4",
-                "Number ", "5",
-                "Number ", "6",
-                "Number ", "7",
-                "Number ", "8",
-                "Number ", "9"
-            };//count 20
-
-            var sbArr = new StringBuilderArray.StringBuilderArray();
+            var expectStart = "0123456789";
+            var sbFromEnd = new StringBuilderArray.StringBuilderArray(10);
+            var sbFromStart = new StringBuilderArray.StringBuilderArray(10);
             for (int i = 0; i < 10; i++)
             {
-                sbArr.Append($"Number {i}");
+                sbFromEnd.Append(i.ToString());
+                sbFromStart.Append(i.ToString());
             }
 
-            expect.Insert(expect.Count - 2, "Secret before end ");
-            expect.Insert(expect.Count - 2, literal);
-            //count 22
-            sbArr.Insert(1, $"Secret before end {literal}");
+            var expectedResult = expectStart.Insert(insertIndexFromStart, insertValue);
+            sbFromStart.InsertByIndex(insertIndexFromStart, insertValue, StringBuilderArray.IndexDirection.FromStart);
+            var indexFromEnd = expectStart.Length - insertIndexFromStart;
+            sbFromEnd.InsertByIndex(indexFromEnd, insertValue, StringBuilderArray.IndexDirection.FromEnd);
 
-            var index = 0;
-            foreach (var str in sbArr)
-            {
-                Assert.That(str, Is.EqualTo(expect[index++]));
-            }
-
-            expect.Insert(0, "Secret start ");
-            expect.Insert(1, literal);
-            //count 24
-            sbArr.Insert(21, $"Secret start {literal}");
-
-            index = 0;
-            foreach (var str in sbArr)
-            {
-                Assert.That(str, Is.EqualTo(expect[index++]));
-            }
-
-            expect.Insert(2, "Secret index 1 ");
-            expect.Insert(3, literal);
-            //count 26
-            sbArr.Insert(21, $"Secret index 1 {literal}");
-
-            index = 0;
-            foreach (var str in sbArr)
-            {
-                Assert.That(str, Is.EqualTo(expect[index++]));
-            }
-
-            expect.Insert(8, "Secret index 9 ");
-            expect.Insert(9, literal);
-            //count 28
-            sbArr.Insert(17, $"Secret index 9 {literal}");
-
-            index = 0;
-            foreach (var str in sbArr)
-            {
-                Assert.That(str, Is.EqualTo(expect[index++]));
-            }
+            Assert.That(sbFromStart.ToString(), Is.EqualTo(expectedResult), "Error in FromStart");
+            Assert.That(sbFromEnd.ToString(), Is.EqualTo(expectedResult), "Error in FromEnd");
         }
-#endif
+
+        [Test]
+        public void InsertIntoOneString()
+        {
+            var sbFromStart = new StringBuilderArray.StringBuilderArray();
+            var sbFromEnd = new StringBuilderArray.StringBuilderArray();
+
+            sbFromStart.Append("ABCDEF");
+            sbFromEnd.Append("ABCDEF");
+
+            // "ABC-INSERT-DEF"
+            sbFromStart.InsertByIndex(3, "INSERT", StringBuilderArray.IndexDirection.FromStart);
+            sbFromEnd.InsertByIndex(3, "INSERT", StringBuilderArray.IndexDirection.FromEnd);
+
+            var expect = "ABCINSERTDEF";
+            Assert.That(sbFromStart.ToString(), Is.EqualTo(expect), "Error in FromStart");
+            Assert.That(sbFromEnd.ToString(), Is.EqualTo(expect), "Error in FromEnd");
+        }
+
+        [Test]
+        public void InsertIntoPreviousChunk()
+        {
+            var sbFromStart = new StringBuilderArray.StringBuilderArray(10);
+            var sbFromEnd = new StringBuilderArray.StringBuilderArray(10);
+            string expect = "START_";
+            for (int i = 0; i < 15; i++)
+            {
+                expect += $"[{i}]";
+                sbFromStart.Append($"[{i}]");
+                sbFromEnd.Append($"[{i}]");
+            }
+
+            sbFromStart.InsertByIndex(0, "START_", StringBuilderArray.IndexDirection.FromStart);
+            sbFromEnd.InsertByIndex(expect.Length - "START_".Length, "START_", StringBuilderArray.IndexDirection.FromEnd);
+            Assert.That(sbFromStart.ToString(), Is.EqualTo(expect));
+            Assert.That(sbFromEnd.ToString(), Is.EqualTo(expect));
+        }
     }
 }

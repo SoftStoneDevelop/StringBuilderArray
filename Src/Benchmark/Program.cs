@@ -10,6 +10,7 @@ namespace Benchmark
             BenchmarkRunner.Run<CompareStringBuilders>();
             BenchmarkRunner.Run<CompareStringBuildersClear>();
             BenchmarkRunner.Run<CompareStringBuildersInsert>();
+            BenchmarkRunner.Run<CompareEnumerable>();
         }
     }
 }

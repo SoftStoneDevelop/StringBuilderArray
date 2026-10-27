@@ -39,11 +39,10 @@ namespace StringBuilderArrayTests
                 Assert.That(haveChar, Is.EqualTo(expectChar));
             }
 #endif
-
             var index = 0;
             foreach (var str in sbArr)
             {
-                Assert.That(str, Is.EqualTo(list[index++]));
+                Assert.That(str, Is.EqualTo(sb[index++]));
             }
         }
 
@@ -53,21 +52,18 @@ namespace StringBuilderArrayTests
         {
             var strBuilded = new string('a', length - 1);
             var sb = new StringBuilder();
-            var list = new List<string>();
-            var listInput = new List<string>();
+            var lines = new List<string>();
             for (int i = 0; i < 53; i++)
             {
                 var text = i.ToString() + strBuilded;
-                listInput.Add(text);
-                list.Add(text);
-                list.Add(Environment.NewLine);
+                lines.Add(text);
                 sb.AppendLine(text);
             }
 
             var sbArr = new StringBuilderArray.StringBuilderArray();
-            sbArr.AppendLine(listInput);
+            sbArr.AppendLine(lines);
 
-            Assert.That(sb.ToString(), Is.EqualTo(sbArr.ToString()));
+            Assert.That(sbArr.ToString(), Is.EqualTo(sb.ToString()));
 #if NET5_0_OR_GREATER
             var expectSpan = sb.ToString().AsSpan();
             var resultSpan = GC.AllocateUninitializedArray<char>(sbArr.Length);
@@ -83,7 +79,7 @@ namespace StringBuilderArrayTests
             var index = 0;
             foreach (var str in sbArr)
             {
-                Assert.That(str, Is.EqualTo(list[index++]));
+                Assert.That(str, Is.EqualTo(sb[index++]));
             }
         }
     }

@@ -6,10 +6,9 @@ namespace Benchmark
     [MemoryDiagnoser]
     [SimpleJob(RuntimeMoniker.Net10_0)]
     [SimpleJob(RuntimeMoniker.NativeAot10_0)]
-    [HideColumns("Error", "StdDev", "Median", "RatioSD", "Gen0", "Gen1", "Gen2")]
     public partial class CompareStringBuildersInsert
     {
-        [Params(5, 7, 10, 50, 100, 1000, 2500, 5_000, 10_000, 100_000, 500_000, 1_071_741)]
+        [Params(100, 1000, 10_000, 100_000)]
         public int StrLength;
 
         private string _str;
@@ -21,7 +20,7 @@ namespace Benchmark
         }
 
         [Benchmark(Baseline = true, Description = "StringBuilderArray")]
-        public void StringBuilderArray()
+        public void MineStringBuilderArray()
         {
             var sb = new StringBuilderArray.StringBuilderArray();
             for (int i = 0; i < 100; i++)
@@ -29,13 +28,13 @@ namespace Benchmark
                 sb.Append(_str);
             }
 
-            sb.Insert(0, _str);
+            sb.InsertByIndex(99 * _str.Length, _str, StringBuilderArray.IndexDirection.FromStart);
 
             //in start
-            sb.Insert(100, _str);
+            sb.InsertByIndex(0, _str, StringBuilderArray.IndexDirection.FromStart);
 
             //after 5 str from start
-            sb.Insert(96, _str);
+            sb.InsertByIndex(5 * _str.Length, _str, StringBuilderArray.IndexDirection.FromStart);
         }
 
         [Benchmark(Description = "StringBuilder")]

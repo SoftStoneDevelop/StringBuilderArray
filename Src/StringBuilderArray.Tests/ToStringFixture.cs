@@ -13,7 +13,6 @@ namespace StringBuilderArrayTests
             for (int i = 0; i < 10; i++)
             {
                 sbArr.Append(i.ToString());
-                Assert.That(sbArr.GetIndex(i.ToString()), Is.EqualTo(0));
             }
 
             var str = sbArr.ToString();
