@@ -20,19 +20,12 @@ namespace StringBuilderArray
                 _currentCharIndex = 0;
                 _current = char.MinValue;
                 _currentString = null;
-
                 var tempChunk = stringBuilderArray;
                 do
                 {
                     _currentChunk = tempChunk;
                     tempChunk = _currentChunk._previous;
                 } while (tempChunk != null);
-
-                if (_currentChunk._size > 0 && _currentChunk._buffer[0].Length > 0)
-                {
-                    _currentString = _currentChunk._buffer[0];
-                    _current = _currentString[0];
-                }
             }
 
 #if NET5_0_OR_GREATER
@@ -58,7 +51,12 @@ namespace StringBuilderArray
                     return false;
                 }
 
-                if (_currentString.Length == _currentCharIndex)
+#if NET5_0_OR_GREATER
+                var span = _currentString.AsSpan();
+#else
+                var span = _currentString;
+#endif
+                if (span.Length == _currentCharIndex)
                 {
                     if (_currentChunk._size == _currentBufferIndex + 1)
                     {
@@ -77,9 +75,14 @@ namespace StringBuilderArray
                     }
 
                     _currentString = _currentChunk._buffer[_currentBufferIndex];
+#if NET5_0_OR_GREATER
+                    span = _currentString.AsSpan();
+#else
+                    span = _currentString;
+#endif
                 }
 
-                _current = _currentString[_currentCharIndex++];
+                _current = span[_currentCharIndex++];
                 return true;
             }
 
