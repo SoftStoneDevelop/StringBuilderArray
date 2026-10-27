@@ -1,5 +1,6 @@
 ﻿using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
+using System;
 using System.Runtime.CompilerServices;
 
 namespace Benchmark
@@ -47,6 +48,7 @@ namespace Benchmark
             for (int i = 0; i < 1000; i++)
             {
                 sb.AppendLiteral(_str);
+                sb.AppendLiteral(Environment.NewLine);
             }
         }
     }

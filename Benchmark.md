@@ -83,6 +83,7 @@ public void DefaultInterpolatedStringHandler()
     for (int i = 0; i < 1000; i++)
     {
         sb.AppendLiteral(_str);
+		sb.AppendLiteral(Environment.NewLine);
     }
 }
 
@@ -151,12 +152,14 @@ public void DefaultInterpolatedStringHandler()
     for (int i = 0; i < 1000; i++)
     {
         sb.AppendLiteral(_str);
+		sb.AppendLiteral(Environment.NewLine);
     }
 
     sb.Clear();
     for (int i = 0; i < 1000; i++)
     {
         sb.AppendLiteral(_str);
+		sb.AppendLiteral(Environment.NewLine);
     }
 }
 
@@ -195,13 +198,13 @@ public void StringBuilderArray()
         sb.Append(_str);
     }
 
-    sb.Insert(0, _str);
+    sb.InsertByIndex(99 * _str.Length, _str, StringBuilderArray.IndexDirection.FromStart);
 
     //in start
-    sb.Insert(100, _str);
+    sb.InsertByIndex(0, _str, StringBuilderArray.IndexDirection.FromStart);
 
     //after 5 str from start
-    sb.Insert(96, _str);
+    sb.InsertByIndex(5 * _str.Length, _str, StringBuilderArray.IndexDirection.FromStart);
 }
 
 [Benchmark(Description = "StringBuilder")]
