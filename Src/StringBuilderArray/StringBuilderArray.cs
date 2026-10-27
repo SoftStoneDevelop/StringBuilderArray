@@ -528,9 +528,9 @@ namespace StringBuilderArray
                 {
                     AppendCustomFormatter(value, format: null);
                 }
-                else if (value is IFormattable)
+                else if (value is IFormattable formattable)
                 {
-                    _stringBuilder.Append(((IFormattable)value).ToString(format: null, _provider));
+                    _stringBuilder.Append(formattable.ToString(format: null, _provider));
                 }
                 else if (value is not null)
                 {
@@ -544,9 +544,9 @@ namespace StringBuilderArray
                 {
                     AppendCustomFormatter(value, format);
                 }
-                else if (value is IFormattable)
+                else if (value is IFormattable formattable)
                 {
-                    _stringBuilder.Append(((IFormattable)value).ToString(format, _provider));
+                    _stringBuilder.Append(formattable.ToString(format, _provider));
                 }
                 else if (value is not null)
                 {
@@ -684,9 +684,9 @@ namespace StringBuilderArray
                 {
                     AppendCustomFormatter(value, format: null);
                 }
-                else if (value is IFormattable)
+                else if (value is IFormattable formattable)
                 {
-                    _stringBuilder.InsertByIndex(_charIndex, ((IFormattable)value).ToString(format: null, _provider), _directionIndex);
+                    _stringBuilder.InsertByIndex(_charIndex, formattable.ToString(format: null, _provider), _directionIndex);
                 }
                 else if (value is not null)
                 {
