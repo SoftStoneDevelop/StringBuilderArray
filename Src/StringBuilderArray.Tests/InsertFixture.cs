@@ -71,5 +71,23 @@ namespace StringBuilderArrayTests
             Assert.That(sbFromStart.ToString(), Is.EqualTo(expect));
             Assert.That(sbFromEnd.ToString(), Is.EqualTo(expect));
         }
+
+        [Test]
+        public void InsertInterpol()
+        {
+            var sbFromStart = new StringBuilderArray.StringBuilderArray(10);
+            string expect = "START_1_START_0_";
+            for (int i = 0; i < 15; i++)
+            {
+                expect += $"[{i}]";
+                sbFromStart.Append($"[{i}]");
+            }
+
+            var id = 0;
+            sbFromStart.InsertByIndex(0, $"START_{id}_", StringBuilderArray.IndexDirection.FromStart);
+            id = 1;
+            sbFromStart.InsertByIndex(0, $"START_{id}_", StringBuilderArray.IndexDirection.FromStart);
+            Assert.That(sbFromStart.ToString(), Is.EqualTo(expect));
+        }
     }
 }
