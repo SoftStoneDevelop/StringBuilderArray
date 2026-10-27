@@ -27,9 +27,9 @@ namespace StringBuilderArrayTests
             }
 
             var expectedResult = expectStart.Insert(insertIndexFromStart, insertValue);
-            sbFromStart.InsertByIndex(insertIndexFromStart, insertValue, StringBuilderArray.StringBuilderArray.IndexDirection.FromStart);
+            sbFromStart.InsertByIndex(insertIndexFromStart, insertValue, StringBuilderArray.IndexDirection.FromStart);
             var indexFromEnd = expectStart.Length - insertIndexFromStart;
-            sbFromEnd.InsertByIndex(indexFromEnd, insertValue, StringBuilderArray.StringBuilderArray.IndexDirection.FromEnd);
+            sbFromEnd.InsertByIndex(indexFromEnd, insertValue, StringBuilderArray.IndexDirection.FromEnd);
 
             Assert.That(sbFromStart.ToString(), Is.EqualTo(expectedResult), "Error in FromStart");
             Assert.That(sbFromEnd.ToString(), Is.EqualTo(expectedResult), "Error in FromEnd");
@@ -45,8 +45,8 @@ namespace StringBuilderArrayTests
             sbFromEnd.Append("ABCDEF");
 
             // "ABC-INSERT-DEF"
-            sbFromStart.InsertByIndex(3, "INSERT", StringBuilderArray.StringBuilderArray.IndexDirection.FromStart);
-            sbFromEnd.InsertByIndex(3, "INSERT", StringBuilderArray.StringBuilderArray.IndexDirection.FromEnd);
+            sbFromStart.InsertByIndex(3, "INSERT", StringBuilderArray.IndexDirection.FromStart);
+            sbFromEnd.InsertByIndex(3, "INSERT", StringBuilderArray.IndexDirection.FromEnd);
 
             var expect = "ABCINSERTDEF";
             Assert.That(sbFromStart.ToString(), Is.EqualTo(expect), "Error in FromStart");
@@ -66,8 +66,8 @@ namespace StringBuilderArrayTests
                 sbFromEnd.Append($"[{i}]");
             }
 
-            sbFromStart.InsertByIndex(0, "START_", StringBuilderArray.StringBuilderArray.IndexDirection.FromStart);
-            sbFromEnd.InsertByIndex(expect.Length - "START_".Length, "START_", StringBuilderArray.StringBuilderArray.IndexDirection.FromEnd);
+            sbFromStart.InsertByIndex(0, "START_", StringBuilderArray.IndexDirection.FromStart);
+            sbFromEnd.InsertByIndex(expect.Length - "START_".Length, "START_", StringBuilderArray.IndexDirection.FromEnd);
             Assert.That(sbFromStart.ToString(), Is.EqualTo(expect));
             Assert.That(sbFromEnd.ToString(), Is.EqualTo(expect));
         }
