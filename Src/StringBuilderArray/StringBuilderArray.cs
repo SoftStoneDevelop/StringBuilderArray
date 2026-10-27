@@ -57,14 +57,9 @@ namespace StringBuilderArray
             if (_size == _buffer.Length)
             {
                 MakePlace();
-                _buffer[0] = str;
-                _size++;
-            }
-            else
-            {
-                _buffer[_size++] = str;
             }
 
+            _buffer[_size++] = str;
             _instatnceLength += str.Length;
             return this;
         }
@@ -72,7 +67,7 @@ namespace StringBuilderArray
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void MakePlace()
         {
-            if(_next != null && _next._size < _next._buffer.Length)
+            if(_next != null)
             {
                 var tempBuffer = _buffer;
                 _buffer = _next._buffer;
@@ -92,10 +87,6 @@ namespace StringBuilderArray
                 var tempNext = _next._next;
                 _next._next = this;
                 _next = tempNext;
-                if (_size > 0)
-                {
-                    ShiftRight(_buffer);
-                }
             }
             else
             {
@@ -112,6 +103,46 @@ namespace StringBuilderArray
                 {
                     tempPrev._previous._next = tempPrev;
                 }
+            }
+        }
+
+        private static void AppendInternal(StringBuilderArray builder, string str)
+        {
+            if (builder._size == builder._buffer.Length)
+            {
+                if (builder._next != null && builder._next._size < builder._next._buffer.Length)
+                {
+                    if (builder._next._size > 0)
+                    {
+                        ShiftRight(builder._next._buffer);
+                    }
+
+                    builder._next._buffer[0] = str;
+                    builder._next._instatnceLength += str.Length;
+                    builder._next._size++;
+                }
+                else
+                {
+                    var tempPrev = new StringBuilderArray(builder._buffer, builder._size, builder._instatnceLength);
+                    builder._size = 0;
+                    builder._instatnceLength = 0;
+                    builder._buffer = new string[Math.Max(10, Math.Min(builder._buffer.Length * 2, MaxChunkSize))];
+
+                    tempPrev._previous = builder._previous;
+                    builder._previous = tempPrev;
+                    tempPrev._next = builder;
+                    if (tempPrev._previous != null)
+                    {
+                        tempPrev._previous._next = tempPrev;
+                    }
+                    builder._buffer[builder._size++] = str;
+                    builder._instatnceLength += str.Length;
+                }
+            }
+            else
+            {
+                builder._buffer[builder._size++] = str;
+                builder._instatnceLength += str.Length;
             }
         }
 
@@ -340,7 +371,7 @@ namespace StringBuilderArray
         /// <summary>
         /// Insert a string at the specified index.
         /// </summary>
-        public StringBuilderArray InsertByIndex(int charIndex, string value, IndexDirection direction)
+        public void InsertByIndex(int charIndex, string value, IndexDirection direction)
         {
             charIndex =
                 direction == IndexDirection.FromStart ? Length - charIndex
@@ -366,17 +397,18 @@ namespace StringBuilderArray
             }
 
             int charIndexInCurrent = charIndex - currentCharIndex;
-            return InsertByIndex(current, charIndexInCurrent, value);
+            InsertByIndex(current, charIndexInCurrent, value);
         }
 
-        private StringBuilderArray InsertByIndex(
+        private void InsertByIndex(
             StringBuilderArray current,
             int charIndex,
             string value)
         {
             if (current._instatnceLength == 0 || charIndex == 0)
             {
-                return current.Append(value);
+                current.Append(value);
+                return;
             }
 
             var insertIndex = -1;
@@ -429,10 +461,8 @@ namespace StringBuilderArray
 
             while (insertQueue.Count > 0)
             {
-                current = current.Append(insertQueue.Dequeue());
+                AppendInternal(current, insertQueue.Dequeue());
             }
-
-            return current;
         }
 
         #region IEnumerable
